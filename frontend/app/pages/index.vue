@@ -11,6 +11,8 @@ const connected = computed(() => !error.value && data.value?.status === 'ok')
     <h1 class="text-3xl font-semibold tracking-tight sm:text-4xl">為生活留下一點記憶。</h1>
     <p class="mt-4 leading-7 text-stone-600">你的個人紀錄空間，從每一段文字開始。</p>
 
+    <NuxtLink to="/login" class="mt-6 w-fit text-teal-800 underline underline-offset-4">使用 Google 登入</NuxtLink>
+
     <section aria-labelledby="status-heading" class="mt-10 rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
       <h2 id="status-heading" class="text-lg font-semibold">開發環境連線</h2>
       <p role="status" aria-live="polite" class="mt-3 leading-7 text-stone-600">

@@ -6,8 +6,12 @@ export default defineNuxtConfig({
   css: ['~/assets/css/main.css'],
   vite: { plugins: [tailwindcss()] },
   typescript: { strict: true },
+  routeRules: { '/login': { headers: { 'cache-control': 'no-store' } } },
   runtimeConfig: {
     backendBaseUrl: 'http://127.0.0.1:8000',
+    public: {
+      firebase: { apiKey: '', authDomain: '', projectId: '', appId: '' },
+    },
   },
   app: {
     head: {
