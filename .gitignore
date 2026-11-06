@@ -1,0 +1,22 @@
+.DS_Store
+
+# 環境變數與秘密
+.env
+.env.*
+!.env.example
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.uv-cache/
+
+# Nuxt / Node
+node_modules/
+.nuxt/
+.output/
+dist/
+
+# Markdown 文件僅保留本機
+*.md
