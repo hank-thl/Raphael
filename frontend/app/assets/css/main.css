@@ -1,0 +1,8 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    @apply m-0 bg-stone-50 text-stone-900 antialiased;
+    font-family: system-ui, -apple-system, "Noto Sans TC", sans-serif;
+  }
+}

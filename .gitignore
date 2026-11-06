@@ -20,3 +20,8 @@ dist/
 
 # Markdown 文件僅保留本機
 *.md
+
+# 本機套件管理快取與測試產物
+.npm-cache/
+.coverage
+htmlcov/
