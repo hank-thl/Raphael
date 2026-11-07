@@ -6,6 +6,7 @@ const nuxt = useNuxtApp()
 const config = useRuntimeConfig().public.firebase
 const configured = Boolean(config.apiKey && config.authDomain && config.projectId && config.appId)
 const { data: user, status, error: sessionError, refresh } = await useFetch<CurrentUser>('/api/auth/me')
+const { data: admin } = await useFetch<{ is_admin: boolean }>('/api/admin/me')
 const ready = ref(false)
 const busy = ref(false)
 const message = ref('')
@@ -45,6 +46,7 @@ async function login() {
     })
     stage = 'profile'
     await refresh()
+    await refreshNuxtData()
     if (!user.value) message.value = authErrorMessage(sessionError.value, 'profile')
   } catch (error: unknown) {
     message.value = authErrorMessage(error, stage)
@@ -79,6 +81,7 @@ async function logout() {
       <template v-else-if="user">
         <p class="mt-4 break-all text-stone-600">{{ user.email || 'Google 帳號' }}</p>
         <NuxtLink to="/records" class="mt-6 block min-h-11 rounded-xl bg-teal-800 px-5 py-3 text-center font-medium text-white hover:bg-teal-900">開始記錄</NuxtLink>
+        <NuxtLink v-if="admin?.is_admin" to="/admin/users" class="mt-4 block min-h-11 py-3 text-teal-800 underline">管理允許帳號</NuxtLink>
         <button type="button" :disabled="busy" class="mt-6 min-h-11 rounded-xl bg-teal-800 px-5 py-3 text-white focus-visible:outline-2 focus-visible:outline-offset-4 disabled:opacity-50" @click="logout">{{ busy ? '處理中…' : '登出' }}</button>
       </template>
       <template v-else>

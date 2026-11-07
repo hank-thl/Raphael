@@ -7,6 +7,7 @@ from functools import lru_cache
 class Settings:
     firebase_project_id: str = ""
     allowed_uids: frozenset[str] = frozenset()
+    admin_uid: str = ""
     allowed_origins: frozenset[str] = frozenset()
     signup_restriction_confirmed: bool = False
     cookie_secure: bool = True
@@ -18,7 +19,7 @@ class Settings:
     def auth_ready(self) -> bool:
         return bool(
             self.firebase_project_id
-            and self.allowed_uids
+            and (self.allowed_uids or self.admin_uid)
             and self.allowed_origins
             and self.signup_restriction_confirmed
         )
@@ -30,6 +31,7 @@ def get_settings() -> Settings:
     if not 300 <= session_seconds <= 1209600:
         raise ValueError("SESSION_SECONDS must be between 300 and 1209600")
     return Settings(
+        admin_uid=os.getenv("ADMIN_FIREBASE_UID", "").strip(),
         firebase_project_id=os.getenv("FIREBASE_PROJECT_ID", "").strip(),
         allowed_uids=frozenset(filter(None, (s.strip() for s in os.getenv("ALLOWED_FIREBASE_UIDS", "").split(",")))),
         allowed_origins=frozenset(filter(None, (s.strip() for s in os.getenv("AUTH_ALLOWED_ORIGINS", "").split(",")))),

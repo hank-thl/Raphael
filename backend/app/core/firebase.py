@@ -46,6 +46,18 @@ class FirebaseAuthService:
         ) as exc:
             raise InvalidCredential from exc
 
+    def ensure_account(self, email: str):
+        try:
+            user = self.auth.get_user_by_email(email, app=self.app)
+        except self.auth.UserNotFoundError:
+            try:
+                user = self.auth.create_user(email=email, email_verified=False, app=self.app)
+            except self.auth.EmailAlreadyExistsError:
+                user = self.auth.get_user_by_email(email, app=self.app)
+        if user.disabled:
+            raise ValueError("Firebase account disabled")
+        return user
+
     def verify_id_token(self, token: str) -> dict[str, Any]:
         return self._verify(self.auth.verify_id_token, token)
 

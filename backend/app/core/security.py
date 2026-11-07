@@ -33,14 +33,19 @@ def require_csrf(request: Request, _origin: None = Depends(require_origin)) -> N
         raise HTTPException(403, "請重新載入頁面後再試一次")
 
 
-def user_from_claims(claims: dict[str, Any], settings: Settings) -> CurrentUser:
+def user_from_claims(claims: dict[str, Any], settings: Settings, request: Request) -> CurrentUser:
     uid = claims.get("uid")
     if not isinstance(uid, str) or not uid:
         raise HTTPException(401, "請重新登入")
     provider = claims.get("firebase")
     if not isinstance(provider, dict) or provider.get("sign_in_provider") != "google.com":
         raise HTTPException(403, "僅允許 Google 登入")
-    if uid not in settings.allowed_uids:
+    if settings.admin_uid:
+        from app.core.access import account_access_allowed
+        allowed = account_access_allowed(request, uid, settings)
+    else:
+        allowed = uid in settings.allowed_uids
+    if not allowed:
         raise HTTPException(403, "此帳號尚未獲得使用權限")
     return CurrentUser(uid=uid, email=claims.get("email"))
 
@@ -59,4 +64,4 @@ def get_current_user(
         raise HTTPException(401, "登入已失效，請重新登入") from None
     except Exception:
         raise HTTPException(503, "登入服務暫時無法使用") from None
-    return user_from_claims(claims, settings)
+    return user_from_claims(claims, settings, request)

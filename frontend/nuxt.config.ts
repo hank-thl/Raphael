@@ -7,6 +7,7 @@ export default defineNuxtConfig({
   vite: { plugins: [tailwindcss()] },
   typescript: { strict: true },
   routeRules: {
+    '/admin/**': { headers: { 'cache-control': 'no-store' } },
     '/login': { headers: { 'cache-control': 'no-store' } },
     '/records': { headers: { 'cache-control': 'no-store' } },
   },

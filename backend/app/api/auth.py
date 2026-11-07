@@ -1,7 +1,7 @@
 import secrets
 import time
 
-from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.core.config import Settings, get_settings
@@ -34,6 +34,7 @@ def csrf(
 @router.post("/login", response_model=CurrentUser, dependencies=[Depends(require_csrf)])
 def login(
     body: LoginRequest,
+    request: Request,
     response: Response,
     settings: Settings = Depends(get_settings),
     service: AuthService = Depends(get_auth_service),
@@ -44,7 +45,7 @@ def login(
         raise HTTPException(401, "登入已失效，請重新登入") from None
     except Exception:
         raise HTTPException(503, "登入服務暫時無法使用") from None
-    user = user_from_claims(claims, settings)
+    user = user_from_claims(claims, settings, request)
     auth_time = claims.get("auth_time")
     now = time.time()
     if not isinstance(auth_time, (int, float)) or not now - 300 <= auth_time <= now + 30:
