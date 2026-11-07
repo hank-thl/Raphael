@@ -78,6 +78,7 @@ async function logout() {
       <p v-if="status === 'pending'" role="status" class="mt-4">正在確認登入狀態…</p>
       <template v-else-if="user">
         <p class="mt-4 break-all text-stone-600">{{ user.email || 'Google 帳號' }}</p>
+        <NuxtLink to="/records" class="mt-6 block min-h-11 rounded-xl bg-teal-800 px-5 py-3 text-center font-medium text-white hover:bg-teal-900">開始記錄</NuxtLink>
         <button type="button" :disabled="busy" class="mt-6 min-h-11 rounded-xl bg-teal-800 px-5 py-3 text-white focus-visible:outline-2 focus-visible:outline-offset-4 disabled:opacity-50" @click="logout">{{ busy ? '處理中…' : '登出' }}</button>
       </template>
       <template v-else>

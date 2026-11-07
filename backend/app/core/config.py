@@ -1,5 +1,5 @@
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from functools import lru_cache
 
 
@@ -11,6 +11,8 @@ class Settings:
     signup_restriction_confirmed: bool = False
     cookie_secure: bool = True
     session_seconds: int = 86400
+    mongodb_uri: str = field(default="", repr=False)
+    mongodb_database: str = "raphael_dev"
 
     @property
     def auth_ready(self) -> bool:
@@ -34,4 +36,6 @@ def get_settings() -> Settings:
         signup_restriction_confirmed=os.getenv("AUTH_SIGNUP_RESTRICTION_CONFIRMED", "false").lower() == "true",
         cookie_secure=os.getenv("COOKIE_SECURE", "true").lower() == "true",
         session_seconds=session_seconds,
+        mongodb_uri=os.getenv("MONGODB_URI", "").strip(),
+        mongodb_database=os.getenv("MONGODB_DATABASE", "raphael_dev").strip(),
     )

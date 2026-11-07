@@ -11,7 +11,8 @@
     "preview": "nuxt preview --host 127.0.0.1",
     "postinstall": "nuxt prepare",
     "typecheck": "nuxt typecheck",
-    "test:auth": "node --experimental-strip-types --test tests/auth-errors.test.ts"
+    "test:auth": "node --experimental-strip-types --test tests/auth-errors.test.ts",
+    "test": "node --experimental-strip-types --test tests/*.test.ts"
   },
   "dependencies": {
     "nuxt": "~4.6.4",
