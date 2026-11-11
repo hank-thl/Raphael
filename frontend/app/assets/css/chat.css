@@ -103,3 +103,21 @@
 .chat-account-panel a, .chat-account-panel button { display: flex; min-height: 44px; align-items: center; font-size: 13px; color: #304d40; }
 .chat-account-panel-heading button { justify-content: center; min-width: 44px; font-size: 22px; }
 .chat-header-nav button.chat-avatar { min-width: 44px; min-height: 44px; }
+
+.chat-message-more { display: inline-flex; align-items: center; justify-content: center; width: 44px; min-height: 44px; margin: -8px -8px -8px 0; border-radius: 10px; color: #7b837c; font-size: 22px; line-height: 1; }
+.chat-message-more:hover:enabled { background: #edf1e8; color: #304d40; }
+.chat-bubble-actionable { -webkit-touch-callout: none; touch-action: pan-y pinch-zoom; }
+@media (pointer: coarse) { .chat-bubble-actionable { user-select: none; -webkit-user-select: none; } }
+.chat-message-dialog { position: fixed; inset: auto 0 0; width: 100%; max-width: 100%; max-height: min(85dvh, 650px); margin: 0; padding: 0; border: 0; border-radius: 24px 24px 0 0; background: #fcfcf8; color: #253c34; overflow-y: auto; box-shadow: 0 -10px 45px #20372b20; }
+.chat-message-dialog::backdrop { background: #17281e66; }
+.chat-message-sheet { padding: 10px 24px max(24px, env(safe-area-inset-bottom)); }
+.chat-sheet-handle { display: block; width: 36px; height: 4px; background: #d7dfd0; border-radius: 4px; margin: 0 auto 24px; }
+.chat-message-sheet h2 { font-size: 19px; font-weight: 600; }
+.chat-message-sheet > p { font-size: 13px; line-height: 1.9; color: #7b837c; margin-top: 10px; }
+.chat-message-sheet blockquote { margin: 18px 0; padding: 12px 16px; border-left: 3px solid #c7d4bb; border-radius: 6px; background: #eff2e9; color: #67765d; font-size: 13px; line-height: 1.8; max-height: 100px; overflow-y: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
+.chat-message-sheet > button { display: flex; width: 100%; min-height: 48px; align-items: center; justify-content: center; border-radius: 12px; font-size: 14px; margin-top: 10px; }
+.chat-sheet-delete { background: #f9ece6; color: #a04434; }
+.chat-sheet-confirm { background: #a44937; color: white; }
+.chat-sheet-cancel { background: #eaf0e4; color: #405b35; }
+.chat-message-sheet > .chat-sheet-error { color: #a04434; }
+@media (min-width: 640px) { .chat-message-dialog { inset: 0; margin: auto; width: min(440px, calc(100% - 48px)); max-height: 80dvh; border-radius: 22px; } }

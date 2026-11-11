@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import ChatMessageActions from '~/components/chat/ChatMessageActions.vue'
 import ChatBubble from '~/components/chat/ChatBubble.vue'
 import ChatComposer from '~/components/chat/ChatComposer.vue'
 import type { ChatMessage } from '~/types/chat'
@@ -14,6 +15,9 @@ const { data: admin } = await useFetch<{ is_admin: boolean }>('/api/admin/me')
 const pageUid = auth.user.value?.uid
 const transport = useChatRecords()
 const messages = ref<ChatMessage[]>([])
+const selectedMessage = ref<ChatMessage | null>(null)
+const deleting = ref(false)
+const deleteError = ref('')
 const pending = ref<ChatMessage | null>(null)
 const draft = ref('')
 const nextCursor = ref<string | null>(null)
@@ -26,7 +30,7 @@ const actionError = ref('')
 const announcement = ref('')
 const scroller = ref<HTMLElement>()
 const bottom = ref<HTMLElement>()
-const busy = computed(() => sending.value || loadingHistory.value || loggingOut.value)
+const busy = computed(() => sending.value || loadingHistory.value || loggingOut.value || deleting.value)
 const dayLabel = (value: string) => new Intl.DateTimeFormat('zh-TW', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Asia/Taipei' }).format(new Date(value))
 const cacheKey = `chat-records:${pageUid}`
 const { data: initial, error: initialError } = await useAsyncData(cacheKey, () => transport.history())
@@ -39,6 +43,7 @@ let active = true
 function handleError(error: unknown) {
   if ([401, 403].includes(recordErrorStatus(error) || 0)) {
     sessionExpired.value = true
+    selectedMessage.value = null
     messages.value = []
     pending.value = null
     nextCursor.value = null
@@ -50,6 +55,7 @@ async function sameAccount() {
     const user = await auth.check()
     if (!active) return false
     if (user.uid !== pageUid) {
+      selectedMessage.value = null
       messages.value = []
       pending.value = null
       draft.value = ''
@@ -124,12 +130,47 @@ async function loadHistory(latest = false) {
     historyError.value = recordErrorMessage(error)
   } finally { loadingHistory.value = false }
 }
+function openMessageActions(message: ChatMessage) {
+  if (busy.value || sessionExpired.value || message.status !== 'success') return
+  accountOpen.value = false
+  deleteError.value = ''
+  selectedMessage.value = message
+}
+async function removeMessage() {
+  const message = selectedMessage.value
+  if (!message || busy.value) return
+  deleting.value = true
+  deleteError.value = ''
+  try {
+    if (!await sameAccount()) return
+    try { await transport.softDelete(message.id) }
+    catch (error) {
+      // Missing / previously deleted / no longer accessible all mean no visible record.
+      if (recordErrorStatus(error) !== 404) throw error
+    }
+    if (!active) return
+    messages.value = messages.value.filter(item => item.id !== message.id)
+    clearNuxtData(cacheKey)
+    clearNuxtData(`records:${pageUid}`)
+    selectedMessage.value = null
+    announcement.value = '紀錄已從聊天室移除。'
+  } catch (error) {
+    if (!active) return
+    handleError(error)
+    const status = recordErrorStatus(error)
+    deleteError.value = status === undefined || status >= 500
+      ? '無法確認刪除結果，請取消並重新整理確認。原文仍保留在資料庫。'
+      : recordErrorMessage(error)
+    if (sessionExpired.value) actionError.value = deleteError.value
+  } finally { deleting.value = false }
+}
 async function logout() {
   if (busy.value) return
   if (draft.value.trim() && !window.confirm('還有尚未儲存的文字，確定放棄並登出？')) return
   loggingOut.value = true
   try {
     await auth.logout()
+    selectedMessage.value = null
     messages.value = []
     pending.value = null
     draft.value = ''
@@ -200,7 +241,7 @@ onBeforeUnmount(() => {
           <ol class="chat-message-list" :aria-busy="loadingHistory">
             <template v-for="(message, index) in messages" :key="message.id">
               <li v-if="index === 0 || dayLabel(messages[index - 1]!.createdAt) !== dayLabel(message.createdAt)" class="chat-date-divider"><span>{{ dayLabel(message.createdAt) }}</span></li>
-              <ChatBubble :message="message" />
+              <ChatBubble :message="message" :disabled="busy || sessionExpired" @actions="openMessageActions" />
             </template>
             <ChatBubble v-if="pending" :message="pending" />
           </ol>
@@ -222,6 +263,7 @@ onBeforeUnmount(() => {
           <p class="chat-footer-note"><span aria-hidden="true">◇</span> 留下今天，讓未來的自己想起。</p>
         </div>
       </footer>
+      <ChatMessageActions v-if="selectedMessage" :message="selectedMessage" :busy="deleting" :error="deleteError" @close="selectedMessage = null" @remove="removeMessage" />
       <p class="sr-only" role="status" aria-live="polite">{{ announcement }}</p>
     </div>
   </div>

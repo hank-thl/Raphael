@@ -12,4 +12,5 @@ export interface ChatHistory { messages: ChatMessage[]; nextCursor: string | nul
 export interface ChatTransport {
   history(cursor?: string): Promise<ChatHistory>
   send(message: ChatMessage): Promise<ChatMessage>
+  softDelete(id: string): Promise<void>
 }
