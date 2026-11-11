@@ -1,8 +1,20 @@
 @import "tailwindcss";
 
+@theme {
+  --font-sans: system-ui, -apple-system, "Noto Sans TC", sans-serif;
+  --font-display: Georgia, serif;
+  --color-chat-ink: #253c34;
+  --color-chat-muted: #7b837c;
+  --color-chat-line: #e6e9e1;
+  --color-chat-paper: #fcfcf8;
+  --color-chat-green: #304d40;
+  --color-chat-bubble-text: #f7f9f3;
+  --color-chat-error: #ab5141;
+  --color-chat-focus: #51846d;
+}
+
 @layer base {
   body {
-    @apply m-0 bg-stone-50 text-stone-900 antialiased;
-    font-family: system-ui, -apple-system, "Noto Sans TC", sans-serif;
+    @apply m-0 bg-stone-50 font-sans text-stone-900 antialiased;
   }
 }
