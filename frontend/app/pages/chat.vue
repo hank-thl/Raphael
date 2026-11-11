@@ -265,7 +265,6 @@ onBeforeUnmount(() => {
             </template>
           </div>
           <ChatComposer v-model="draft" :disabled="busy || uncertain" @send="send" />
-          <p class="chat-footer-note"><span aria-hidden="true">◇</span> 留下今天，讓未來的自己想起。</p>
         </div>
       </footer>
       <ChatMessageActions v-if="selectedMessage" :message="selectedMessage" :busy="deleting" :error="deleteError" @close="selectedMessage = null" @remove="removeMessage" />

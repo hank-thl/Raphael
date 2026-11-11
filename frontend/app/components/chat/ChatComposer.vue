@@ -10,8 +10,9 @@ function resize() {
   const el = input.value
   if (!el) return
   el.style.height = 'auto'
-  el.style.height = `${Math.min(el.scrollHeight, 176)}px`
-  el.style.overflowY = el.scrollHeight > 176 ? 'auto' : 'hidden'
+  const maxHeight = Number.parseFloat(getComputedStyle(el).maxHeight) || 176
+  el.style.height = `${Math.min(el.scrollHeight, maxHeight)}px`
+  el.style.overflowY = el.scrollHeight > maxHeight ? 'auto' : 'hidden'
 }
 function send() { if (!props.disabled && !invalid.value) emit('send') }
 function onKeydown(event: KeyboardEvent) {
@@ -29,14 +30,11 @@ onMounted(resize)
   <form class="chat-composer" @submit.prevent="send">
     <label for="chat-draft" class="sr-only">想記下的文字</label>
     <div class="chat-input-shell">
-      <textarea id="chat-draft" ref="input" v-model="content" :disabled="disabled" rows="1" enterkeyhint="enter" aria-describedby="chat-input-help" :aria-invalid="count > 10000" placeholder="此刻，想記下什麼？" @input="resize" @keydown="onKeydown" />
+      <textarea id="chat-draft" ref="input" v-model="content" :disabled="disabled" rows="1" enterkeyhint="enter" :aria-describedby="count > 10000 ? 'chat-input-error' : undefined" :aria-invalid="count > 10000" placeholder="此刻，想記下什麼？" @input="resize" @keydown="onKeydown" />
       <button type="submit" class="chat-send" :disabled="disabled || invalid" aria-label="傳送訊息">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m6 12 6-6 6 6M12 6v13" stroke-linecap="round" stroke-linejoin="round" /></svg>
       </button>
     </div>
-    <div id="chat-input-help" class="chat-input-help">
-      <span>{{ count > 10000 ? '文字超過 10,000 字，請縮短後再傳送。' : 'Enter 換行 · ⌘ / Ctrl + Enter 傳送' }}</span>
-      <span v-if="count" :class="{ 'chat-error-text': count > 10000 }">{{ count.toLocaleString('zh-TW') }} / 10,000</span>
-    </div>
+    <p v-if="count > 10000" id="chat-input-error" role="alert" class="chat-input-error">文字超過 10,000 字，請縮短後再傳送。</p>
   </form>
 </template>
