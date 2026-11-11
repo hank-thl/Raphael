@@ -114,7 +114,6 @@ async function loadHistory(latest = false) {
   loadingHistory.value = true
   historyError.value = ''
   try {
-    if (!await sameAccount()) return
     const page = await transport.history(latest ? undefined : nextCursor.value || undefined)
     if (!active) return
     // Refresh replaces loaded history so soft-deleted records disappear too.
@@ -126,6 +125,12 @@ async function loadHistory(latest = false) {
     else if (scroller.value) scroller.value.scrollTop = offset + scroller.value.scrollHeight - before
   } catch (error) {
     if (!active) return
+    if (recordErrorStatus(error) === 409) {
+      try { await sameAccount() } catch (failure) { handleError(failure) }
+      if (!active) return
+      historyError.value = '登入帳號已變更，請重新開啟聊天室。'
+      return
+    }
     handleError(error)
     historyError.value = recordErrorMessage(error)
   } finally { loadingHistory.value = false }

@@ -306,3 +306,25 @@ def test_cursor_from_another_user_does_not_change_ownership_scope(context):
     login_as(client, "b")
     response = client.get("/records", params={"cursor": cursor})
     assert [row["content"] for row in response.json()["items"]] == ["user-b-2", "user-b-1"]
+
+
+def test_history_account_guard_rejects_changed_session_before_query(context):
+    client, collection = context
+    client.cookies.set(SESSION_COOKIE, 'session-b')
+    collection.seed('user-b', 1)
+    response = client.get('/records', headers={'X-Raphael-Account': 'user-a'})
+    assert response.status_code == 409
+    assert not collection.queries
+    assert 'items' not in response.json()
+
+
+def test_history_account_header_does_not_override_verified_identity(context):
+    client, collection = context
+    collection.seed('user-a', 1)
+    collection.seed('user-b', 2)
+    client.cookies.set(SESSION_COOKIE, 'session-a')
+    response = client.get('/records', headers={'X-Raphael-Account': 'user-a'})
+    assert response.status_code == 200
+    assert [item['content'] for item in response.json()['items']] == ['user-a-1']
+    client.cookies.clear()
+    assert client.get('/records', headers={'X-Raphael-Account': 'user-a'}).status_code == 401

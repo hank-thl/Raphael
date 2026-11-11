@@ -8,8 +8,9 @@ export function useRecords() {
     return { 'x-csrf-token': csrf_token }
   }
 
-  function list(cursor?: string) {
-    return requestFetch<RecordPage>('/api/records', { query: { limit: 20, ...(cursor ? { cursor } : {}) } })
+  function list(cursor?: string, expectedUid?: string) {
+    return requestFetch<RecordPage>('/api/records', { query: { limit: 20, ...(cursor ? { cursor } : {}) },
+      headers: expectedUid ? { 'X-Raphael-Account': expectedUid } : undefined })
   }
 
   async function create(content: string) {

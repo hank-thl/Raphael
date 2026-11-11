@@ -3,7 +3,7 @@ from contextlib import contextmanager
 from typing import Annotated
 
 from bson import ObjectId
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request, Response
 from pymongo.errors import PyMongoError
 
 from app.core.security import CurrentUser, get_current_user, require_csrf
@@ -42,9 +42,13 @@ def create_record(
 def list_records(
     limit: Annotated[int, Query(ge=1, le=100)] = 20,
     cursor: Annotated[str | None, Query(max_length=512)] = None,
+    expected_uid: Annotated[str | None, Header(alias="X-Raphael-Account", max_length=128)] = None,
     user: CurrentUser = Depends(get_current_user),
     repository: RecordsRepository = Depends(get_records_repository),
 ) -> RecordPage:
+    # This header only checks page consistency; identity always comes from the session.
+    if expected_uid is not None and expected_uid != user.uid:
+        raise HTTPException(409, "帳號已變更，請重新開啟聊天室")
     try:
         boundary = decode_cursor(cursor) if cursor is not None else None
     except ValueError:
