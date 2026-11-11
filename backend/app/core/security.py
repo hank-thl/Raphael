@@ -1,3 +1,4 @@
+import logging
 import secrets
 from typing import Any
 
@@ -6,6 +7,8 @@ from pydantic import BaseModel
 
 from app.core.config import Settings, get_settings
 from app.core.firebase import AuthService, InvalidCredential, get_auth_service
+
+logger = logging.getLogger(__name__)
 
 SESSION_COOKIE = "raphael_session"
 CSRF_COOKIE = "raphael_csrf"
@@ -18,6 +21,7 @@ class CurrentUser(BaseModel):
 
 def require_auth_ready(settings: Settings = Depends(get_settings)) -> None:
     if not settings.auth_ready:
+        logger.warning("Authentication unavailable stage=configuration")
         raise HTTPException(503, "登入功能尚未設定完成")
 
 
@@ -62,6 +66,7 @@ def get_current_user(
         claims = service.verify_session_cookie(cookie)
     except InvalidCredential:
         raise HTTPException(401, "登入已失效，請重新登入") from None
-    except Exception:
+    except Exception as exc:
+        logger.warning("Authentication unavailable stage=verify_session_cookie exception=%s", type(exc).__name__)
         raise HTTPException(503, "登入服務暫時無法使用") from None
     return user_from_claims(claims, settings, request)

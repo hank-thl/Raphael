@@ -1,9 +1,13 @@
+import logging
 from functools import lru_cache
 from typing import Any, Protocol
 
 from fastapi import Depends, HTTPException
 
 from app.core.config import Settings, get_settings
+
+
+logger = logging.getLogger(__name__)
 
 
 class InvalidCredential(Exception):
@@ -76,8 +80,10 @@ def firebase_service(project_id: str) -> FirebaseAuthService:
 
 def get_auth_service(settings: Settings = Depends(get_settings)) -> AuthService:
     if not settings.auth_ready:
+        logger.warning("Authentication unavailable stage=configuration")
         raise HTTPException(503, "登入功能尚未設定完成")
     try:
         return firebase_service(settings.firebase_project_id)
-    except Exception:
+    except Exception as exc:
+        logger.warning("Authentication unavailable stage=firebase_initialize exception=%s", type(exc).__name__)
         raise HTTPException(503, "登入服務暫時無法使用") from None

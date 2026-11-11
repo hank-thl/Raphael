@@ -175,3 +175,44 @@ def test_default_configuration_refuses_all_accounts(monkeypatch):
     assert not settings.auth_ready
     assert settings.cookie_secure
     get_settings.cache_clear()
+
+
+@pytest.mark.parametrize("stage", ["verify_id_token", "create_session_cookie"])
+def test_login_outage_logs_phase_without_credentials(context, caplog, stage):
+    client, service, _ = context
+    def fail(*args):
+        raise RuntimeError("secret-token-and-private-key")
+    setattr(service, stage, fail)
+    with caplog.at_level("WARNING"):
+        response = client.post("/auth/login", json={"id_token": "valid"}, headers=csrf_headers(client))
+    assert response.status_code == 503
+    assert SESSION_COOKIE not in client.cookies
+    assert f"stage={stage} exception=RuntimeError" in caplog.text
+    assert "secret-token-and-private-key" not in caplog.text + response.text
+
+
+def test_initialization_logs_only_stage_and_type(monkeypatch, caplog):
+    from fastapi import HTTPException
+    from app.core import firebase
+    settings = Settings(firebase_project_id="test", allowed_uids=frozenset({"allowed"}),
+                        allowed_origins=frozenset({ORIGIN}), signup_restriction_confirmed=True)
+    def fail(project_id):
+        raise RuntimeError("private-credential-path-and-token")
+    monkeypatch.setattr(firebase, "firebase_service", fail)
+    with caplog.at_level("WARNING"), pytest.raises(HTTPException) as exc:
+        firebase.get_auth_service(settings)
+    assert exc.value.status_code == 503
+    assert "stage=firebase_initialize exception=RuntimeError" in caplog.text
+    assert "private-credential-path-and-token" not in caplog.text
+
+
+def test_session_outage_logs_phase_without_cookie_or_error_message(context, caplog):
+    client, service, _ = context
+    client.cookies.set(SESSION_COOKIE, 'signed-session')
+    service.error = RuntimeError('private-session-and-key')
+    with caplog.at_level('WARNING'):
+        response = client.get('/auth/me')
+    assert response.status_code == 503
+    assert 'stage=verify_session_cookie exception=RuntimeError' in caplog.text
+    assert 'private-session-and-key' not in caplog.text + response.text
+    assert 'signed-session' not in caplog.text

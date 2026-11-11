@@ -1,3 +1,4 @@
+import logging
 import secrets
 import time
 
@@ -10,6 +11,8 @@ from app.core.security import (
     CSRF_COOKIE, SESSION_COOKIE, CurrentUser, get_current_user,
     require_auth_ready, require_csrf, user_from_claims,
 )
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/auth", tags=["auth"], dependencies=[Depends(require_auth_ready)])
 
@@ -43,7 +46,8 @@ def login(
         claims = service.verify_id_token(body.id_token)
     except InvalidCredential:
         raise HTTPException(401, "登入已失效，請重新登入") from None
-    except Exception:
+    except Exception as exc:
+        logger.warning("Authentication unavailable stage=verify_id_token exception=%s", type(exc).__name__)
         raise HTTPException(503, "登入服務暫時無法使用") from None
     user = user_from_claims(claims, settings, request)
     auth_time = claims.get("auth_time")
@@ -52,7 +56,8 @@ def login(
         raise HTTPException(401, "請重新執行 Google 登入")
     try:
         session = service.create_session_cookie(body.id_token, settings.session_seconds)
-    except Exception:
+    except Exception as exc:
+        logger.warning("Authentication unavailable stage=create_session_cookie exception=%s", type(exc).__name__)
         raise HTTPException(503, "登入服務暫時無法使用") from None
     response.set_cookie(SESSION_COOKIE, session, max_age=settings.session_seconds,
                         httponly=True, secure=settings.cookie_secure, samesite="lax", path="/")
