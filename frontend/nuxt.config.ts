@@ -9,6 +9,7 @@ export default defineNuxtConfig({
   routeRules: {
     '/admin/**': { headers: { 'cache-control': 'no-store' } },
     '/login': { headers: { 'cache-control': 'no-store' } },
+    '/chat': { headers: { 'cache-control': 'no-store' } },
     '/records': { headers: { 'cache-control': 'no-store' } },
   },
   runtimeConfig: {

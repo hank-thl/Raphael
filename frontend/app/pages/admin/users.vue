@@ -32,7 +32,7 @@ function toggle(account: Account) {
 
 <template>
   <main class="mx-auto min-h-dvh max-w-2xl px-5 py-10">
-    <NuxtLink to="/records" class="text-teal-800 underline">回到個人紀錄</NuxtLink>
+    <NuxtLink to="/chat" class="text-teal-800 underline">回到聊天室</NuxtLink>
     <h1 class="mt-6 text-2xl font-semibold">允許帳號管理</h1>
     <p class="mt-3 text-stone-600">新增 Google 信箱以允許使用。停用會阻擋後續存取，保留原有紀錄。</p>
     <form class="mt-6 rounded-2xl border border-stone-200 bg-white p-5" @submit.prevent="write('/api/admin/users', 'POST', { email: email.trim() })">
