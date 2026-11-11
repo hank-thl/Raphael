@@ -244,7 +244,7 @@ onBeforeUnmount(() => {
           <div class="pt-[5px] pb-[22px] text-center md:pt-3 md:pb-[27px]"><span class="mb-2 inline-block text-[34px] text-[#7c9369]" aria-hidden="true">✳</span><h2 class="text-[18px] font-medium tracking-[.03em] md:text-[21px]">生活裡的小事，也很重要。</h2><p class="mt-2.5 text-[12px] leading-[1.9] text-chat-muted">一個想法、一段對話，或今天的心情。<br>不用整理好，從一句話開始就可以。</p></div>
           <div class="flex min-h-11 justify-center"><button v-if="nextCursor || historyError" type="button" class="min-h-11 rounded-lg px-[15px] text-[11px] text-[#75856f] hover:bg-[#eef1e8]" :disabled="loadingHistory" @click="loadHistory(!nextCursor)">{{ loadingHistory ? '正在載入…' : historyError ? '重新載入訊息' : '↑ 載入更早的訊息' }}</button></div>
           <p v-if="historyError" role="alert" class="text-center text-[12px] text-chat-error">{{ historyError }}</p>
-          <ol class="flex list-none flex-col gap-[23px] pt-2.5 md:gap-[26px]" :aria-busy="loadingHistory">
+          <ol class="flex list-none flex-col gap-3 pt-2.5 md:gap-[26px]" :aria-busy="loadingHistory">
             <template v-for="(message, index) in messages" :key="message.id">
               <li v-if="index === 0 || dayLabel(messages[index - 1]!.createdAt) !== dayLabel(message.createdAt)" class="mt-0.5 mb-1.5 flex items-center gap-4 text-[10px] text-[#969c91] before:h-px before:flex-1 before:bg-chat-line before:content-[''] after:h-px after:flex-1 after:bg-chat-line after:content-['']"><span>{{ dayLabel(message.createdAt) }}</span></li>
               <ChatBubble :message="message" :disabled="busy || sessionExpired" @actions="openMessageActions" />
@@ -252,10 +252,10 @@ onBeforeUnmount(() => {
             <ChatBubble v-if="pending" :message="pending" />
           </ol>
           <p v-if="!messages.length && !pending && !historyError" class="py-[25px] text-center text-[13px] text-chat-muted">還沒有紀錄。先寫下今天的一件小事吧。</p>
-          <div ref="bottom" class="h-7" />
+          <div ref="bottom" class="h-1" />
         </div>
       </main>
-      <footer class="shrink-0 bg-chat-paper px-4 pb-[max(4px,env(safe-area-inset-bottom))] md:px-9 md:pb-3">
+      <footer class="shrink-0 bg-chat-paper px-4 pb-[calc(env(safe-area-inset-bottom)_+_12px)] md:px-9 md:pb-3">
         <div class="mx-auto max-w-[740px] pt-1">
           <div v-if="actionError || sessionExpired" class="mb-3 max-h-[25dvh] overflow-y-auto rounded-xl border border-[#ebd0c7] bg-[#fff5ef] px-4 py-3 text-[12px] leading-[1.8] text-[#8c4b3c]" role="alert">
             <p>{{ actionError || '登入已失效，請重新登入。' }}</p>
