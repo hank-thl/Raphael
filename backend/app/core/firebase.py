@@ -9,9 +9,35 @@ from app.core.config import Settings, get_settings
 
 logger = logging.getLogger(__name__)
 
+# Bound minor issuer/server drift; Firebase supports 0–60 seconds.
+CLOCK_SKEW_SECONDS = 5
+
 
 class InvalidCredential(Exception):
     pass
+
+
+def credential_failure_reason(error: Exception) -> str:
+    """Return a fixed diagnostic label; never log the SDK's raw token error text."""
+    name = type(error).__name__
+    reasons = {
+        "ExpiredIdTokenError": "expired",
+        "ExpiredSessionCookieError": "expired",
+        "RevokedIdTokenError": "revoked",
+        "RevokedSessionCookieError": "revoked",
+        "UserDisabledError": "user_disabled",
+        "UserNotFoundError": "user_not_found",
+    }
+    if name in reasons:
+        return reasons[name]
+    detail = str(error).lower()
+    if "token used too early" in detail or "not yet valid" in detail:
+        return "clock_skew"
+    if 'incorrect "aud"' in detail or 'incorrect "iss"' in detail:
+        return "project_mismatch"
+    if "signature" in detail:
+        return "invalid_signature"
+    return "invalid_token"
 
 
 class AuthService(Protocol):
@@ -36,9 +62,9 @@ class FirebaseAuthService:
                 credential, {"projectId": project_id}, name="raphael"
             )
 
-    def _verify(self, method: Any, token: str) -> dict[str, Any]:
+    def _verify(self, method: Any, token: str, stage: str) -> dict[str, Any]:
         try:
-            return method(token, app=self.app, check_revoked=True)
+            return method(token, app=self.app, check_revoked=True, clock_skew_seconds=CLOCK_SKEW_SECONDS)
         except (
             ValueError,
             self.auth.InvalidIdTokenError,
@@ -48,6 +74,8 @@ class FirebaseAuthService:
             self.auth.UserDisabledError,
             self.auth.UserNotFoundError,
         ) as exc:
+            logger.warning("Authentication rejected stage=%s reason=%s exception=%s",
+                           stage, credential_failure_reason(exc), type(exc).__name__)
             raise InvalidCredential from exc
 
     def ensure_account(self, email: str):
@@ -63,14 +91,14 @@ class FirebaseAuthService:
         return user
 
     def verify_id_token(self, token: str) -> dict[str, Any]:
-        return self._verify(self.auth.verify_id_token, token)
+        return self._verify(self.auth.verify_id_token, token, "verify_id_token")
 
     def create_session_cookie(self, token: str, seconds: int) -> str:
         cookie = self.auth.create_session_cookie(token, expires_in=seconds, app=self.app)
         return cookie.decode("utf-8") if isinstance(cookie, bytes) else cookie
 
     def verify_session_cookie(self, cookie: str) -> dict[str, Any]:
-        return self._verify(self.auth.verify_session_cookie, cookie)
+        return self._verify(self.auth.verify_session_cookie, cookie, "verify_session_cookie")
 
 
 @lru_cache
