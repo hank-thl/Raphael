@@ -29,6 +29,7 @@ class FakeAuth:
 
     def create_session_cookie(self, token, seconds):
         self.created = True
+        self.session_seconds = seconds
         return "signed-session"
 
     def verify_session_cookie(self, cookie):
@@ -66,6 +67,8 @@ def test_google_login_me_and_local_logout(context):
     assert response.status_code == 200
     assert response.json() == {"uid": "allowed", "email": "test@example.com"}
     assert service.created
+    assert service.session_seconds == 1209600
+    assert "Max-Age=1209600" in response.headers["set-cookie"]
     assert "HttpOnly" in response.headers["set-cookie"]
     assert "SameSite=lax" in response.headers["set-cookie"]
     assert response.headers["cache-control"] == "no-store"
@@ -216,3 +219,21 @@ def test_session_outage_logs_phase_without_cookie_or_error_message(context, capl
     assert 'stage=verify_session_cookie exception=RuntimeError' in caplog.text
     assert 'private-session-and-key' not in caplog.text + response.text
     assert 'signed-session' not in caplog.text
+
+
+@pytest.mark.parametrize("value", [None, "1209600"])
+def test_fourteen_day_session_configuration(monkeypatch, value):
+    if value is None:
+        monkeypatch.delenv("SESSION_SECONDS", raising=False)
+    else:
+        monkeypatch.setenv("SESSION_SECONDS", value)
+    get_settings.cache_clear()
+    assert get_settings().session_seconds == 1209600
+    assert Settings().session_seconds == 1209600
+
+
+def test_session_duration_cannot_exceed_firebase_limit(monkeypatch):
+    monkeypatch.setenv("SESSION_SECONDS", "2592000")
+    get_settings.cache_clear()
+    with pytest.raises(ValueError):
+        get_settings()

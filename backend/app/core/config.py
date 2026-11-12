@@ -11,7 +11,7 @@ class Settings:
     allowed_origins: frozenset[str] = frozenset()
     signup_restriction_confirmed: bool = False
     cookie_secure: bool = True
-    session_seconds: int = 86400
+    session_seconds: int = 1209600
     mongodb_uri: str = field(default="", repr=False)
     mongodb_database: str = "raphael_dev"
 
@@ -27,7 +27,7 @@ class Settings:
 
 @lru_cache
 def get_settings() -> Settings:
-    session_seconds = int(os.getenv("SESSION_SECONDS", "86400"))
+    session_seconds = int(os.getenv("SESSION_SECONDS", "1209600"))
     if not 300 <= session_seconds <= 1209600:
         raise ValueError("SESSION_SECONDS must be between 300 and 1209600")
     return Settings(
