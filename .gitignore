@@ -25,3 +25,6 @@ dist/
 .npm-cache/
 .coverage
 htmlcov/
+
+# Vercel local build output
+.vercel/

@@ -25,5 +25,16 @@
     "tailwindcss": "^4.1.0",
     "typescript": "~5.9.0",
     "vue-tsc": "^3.1.0"
+  },
+  "overrides": {
+    "@firebase/firestore": {
+      "@grpc/grpc-js": "1.13.6"
+    },
+    "@vercel/nft": {
+      "glob": "14.0.6"
+    },
+    "readdir-glob": {
+      "minimatch": "11.0.8"
+    }
   }
 }
