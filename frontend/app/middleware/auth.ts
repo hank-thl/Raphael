@@ -5,6 +5,6 @@ export default defineNuxtRouteMiddleware(async () => {
   } catch (error: unknown) {
     const status = (error as { statusCode?: number }).statusCode
     if (status === 401 || status === 403) return navigateTo('/login')
-    throw createError({ statusCode: 503, statusMessage: 'Service Unavailable', message: '登入服務暫時無法使用，請稍後再試。' })
+    throw createError({ statusCode: 503, statusMessage: 'Service Unavailable', message: useNuxtApp().$i18n.t('errors.authService') })
   }
 })

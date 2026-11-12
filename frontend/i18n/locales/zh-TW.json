@@ -1,0 +1,172 @@
+{
+  "meta": {
+    "title": "Raphael｜個人記憶助手",
+    "description": "Raphael 個人紀錄與記憶助手"
+  },
+  "common": {
+    "language": "介面語言",
+    "cancel": "取消",
+    "delete": "刪除",
+    "processing": "處理中…",
+    "logout": "登出",
+    "loggingOut": "登出中…",
+    "home": "回到首頁",
+    "backChat": "回到聊天室",
+    "openChat": "開啟聊天室",
+    "openingChat": "正在開啟聊天室…",
+    "loading": "載入中…",
+    "refresh": "重新整理"
+  },
+  "home": {
+    "title": "為生活留下一點記憶。",
+    "description": "想法、片刻與日常，都可以從一段文字開始。登入後，開啟屬於你的紀錄空間。"
+  },
+  "login": {
+    "signedIn": "已登入",
+    "heading": "登入你的紀錄空間",
+    "checking": "正在確認登入狀態…",
+    "allowedOnly": "目前僅供已授權的 Google 帳號使用。",
+    "notConfigured": "登入功能尚未設定完成。",
+    "unavailable": "暫時無法確認登入狀態。",
+    "signingIn": "登入中…",
+    "google": "使用 Google 登入",
+    "initFailed": "登入設定無法初始化，請確認設定後重新載入。"
+  },
+  "chat": {
+    "title": "記下此刻",
+    "mode": "記錄模式",
+    "subtitle": "讓想法有個安放的地方。",
+    "primaryNav": "主要導覽",
+    "quickNav": "快捷導覽",
+    "personalSpace": "YOUR PERSONAL SPACE",
+    "motto": "每一個微小的瞬間，都值得被好好記得。",
+    "me": "我",
+    "account": "我的帳號",
+    "memorySpace": "個人的記憶空間",
+    "closeAccount": "關閉帳號選單",
+    "googleAccount": "Google 帳號",
+    "manageAccounts": "管理允許帳號",
+    "private": "個人紀錄 · 僅自己可見",
+    "history": "歷史訊息",
+    "welcome": "生活裡的小事，也很重要。",
+    "welcomeDetail": "一個想法、一段對話，或今天的心情。不用整理好，從一句話開始就可以。",
+    "loadingHistory": "正在載入…",
+    "retryHistory": "重新載入訊息",
+    "older": "↑ 載入更早的訊息",
+    "empty": "還沒有紀錄。先寫下今天的一件小事吧。",
+    "expired": "登入已失效，請重新登入。",
+    "loginNewTab": "在新分頁重新登入",
+    "checkSaved": "請先按「重新整理」確認是否已儲存；必要時載入更早紀錄查看。",
+    "allowRetry": "已確認沒有儲存，允許重新傳送",
+    "savedAnnouncement": "訊息已儲存。",
+    "accountChanged": "登入帳號已變更，請重新開啟聊天室。",
+    "removedAnnouncement": "紀錄已從聊天室移除。",
+    "deleteUnknown": "無法確認刪除結果，請取消並重新整理確認。原文仍保留在資料庫。",
+    "discardLogout": "還有尚未儲存的文字，確定放棄並登出？",
+    "logoutFailed": "登出失敗，請稍後再試。"
+  },
+  "composer": {
+    "label": "想記下的文字",
+    "placeholder": "此刻，想記下什麼？",
+    "send": "傳送訊息",
+    "tooLong": "文字超過 10,000 字，請縮短後再傳送。"
+  },
+  "bubble": {
+    "sending": "傳送中",
+    "uncertain": "儲存結果未確認",
+    "unsaved": "尚未儲存",
+    "saved": "已儲存",
+    "actions": "訊息操作"
+  },
+  "actions": {
+    "title": "刪除這筆紀錄？",
+    "description": "刪除後將從聊天室隱藏，原文仍保留在資料庫。目前不提供還原介面。",
+    "choose": "選擇要對這筆紀錄進行的操作。",
+    "delete": "刪除紀錄",
+    "deleting": "刪除中…",
+    "confirm": "確認刪除"
+  },
+  "admin": {
+    "nav": "帳號管理",
+    "title": "允許帳號管理",
+    "description": "新增 Google 信箱以允許使用。停用會阻擋後續存取，保留原有紀錄。",
+    "email": "Google 帳號信箱",
+    "add": "新增允許帳號",
+    "listFailed": "無法讀取清單，請確認登入狀態並重新整理。",
+    "legacy": "既有允許帳號（可用信箱新增以補齊資料）",
+    "role": "管理員",
+    "enabled": "已允許",
+    "disabled": "已停用",
+    "disable": "停用",
+    "enable": "重新啟用",
+    "activate": "啟用",
+    "updated": "已更新允許清單。",
+    "refreshFailed": "操作已完成，但清單讀取失敗；請重新整理。",
+    "unknown": "操作未確認。請重新整理確認結果，或確認管理員登入與 Firebase 設定後重試。",
+    "unavailable": "無法開啟管理介面",
+    "confirm": "確定{action} {account} 的使用權限？個人紀錄會保留。"
+  },
+  "record": {
+    "heading": "今天想記下什麼？",
+    "help": "想法、遇見的人，或一件值得留下的小事。",
+    "placeholder": "從這裡開始寫…",
+    "count": "{count} / 10,000 字",
+    "save": "儲存紀錄",
+    "list": "個人紀錄",
+    "deleteLabel": "刪除 {time} 的紀錄"
+  },
+  "validation": {
+    "empty": "請先寫下一段文字。",
+    "tooLong": "每筆紀錄最多一萬字，請縮短後再儲存。"
+  },
+  "errors": {
+    "unauthenticated": "登入已過期，請重新登入後再試一次。尚未送出的文字會保留在此頁。",
+    "forbidden": "這次操作未獲允許，請確認登入帳號，或重新整理後再試。",
+    "notFound": "這筆紀錄已不存在，請重新整理列表。",
+    "invalid": "內容不符合格式，請確認不是空白，且未超過一萬字。",
+    "generic": "暫時無法完成操作，請確認連線後重試。",
+    "saveUnknown": "無法確認是否儲存成功。文字尚未清除，請先重新整理列表確認，避免重複儲存。",
+    "authService": "登入服務暫時無法使用，請稍後再試。"
+  },
+  "languages": {
+    "zh-TW": "繁體中文",
+    "ja": "日本語",
+    "en": "English",
+    "th": "ไทย"
+  },
+  "auth": {
+    "google": "Google 驗證",
+    "csrf": "登入安全驗證",
+    "session": "建立登入狀態",
+    "profile": "確認登入狀態",
+    "cookie": "登入已送出，但未保留有效的登入狀態。請確認瀏覽器允許 Cookie，並全程使用同一個網址登入。",
+    "failed": "{stage}失敗{status}{detail}",
+    "status": "（HTTP {status}）",
+    "detail": "：{detail}",
+    "retry": "，請稍後重試。",
+    "googleErrors": {
+      "popup-closed-by-user": "你已取消 Google 登入。",
+      "popup-blocked": "請允許瀏覽器開啟 Google 登入視窗，再試一次。",
+      "cancelled-popup-request": "已有另一個登入視窗，請完成該視窗後再試。",
+      "unauthorized-domain": "此網站主機尚未加入 Firebase 的授權網域，請確認 Authorized domains。",
+      "operation-not-allowed": "Firebase 專案尚未允許 Google 登入，請確認 Google 登入供應商。",
+      "admin-restricted-operation": "Firebase 拒絕這個帳號登入，請確認預建帳號與 Google 身分連結。",
+      "account-exists-with-different-credential": "這個信箱已有其他登入身分，需要先確認帳號連結。",
+      "network-request-failed": "無法連到 Google／Firebase，請確認網路後重試。",
+      "invalid-api-key": "Firebase 公開設定無法使用，請確認 API Key 與專案。",
+      "user-disabled": "此帳號已被停用。",
+      "invalid-credential": "Google 登入憑證無法使用，請重新登入。"
+    },
+    "backend": {
+      "d0": "不允許的請求來源",
+      "d1": "請重新載入頁面後再試一次",
+      "d2": "此帳號尚未獲得使用權限",
+      "d3": "僅允許 Google 登入",
+      "d4": "登入功能尚未設定完成",
+      "d5": "登入服務暫時無法使用",
+      "d6": "登入已失效，請重新登入",
+      "d7": "請重新執行 Google 登入",
+      "d8": "請先登入"
+    }
+  }
+}

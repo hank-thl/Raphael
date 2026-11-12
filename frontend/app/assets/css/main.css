@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: system-ui, -apple-system, "Noto Sans TC", sans-serif;
+  --font-sans: system-ui, -apple-system, "Noto Sans TC", "Noto Sans JP", "Noto Sans Thai", "Thonburi", "Leelawadee UI", sans-serif;
   --font-display: Georgia, serif;
   --color-chat-ink: #253c34;
   --color-chat-muted: #7b837c;
@@ -15,6 +15,6 @@
 
 @layer base {
   body {
-    @apply m-0 bg-stone-50 font-sans text-stone-900 antialiased;
+    @apply m-0 break-words bg-stone-50 font-sans text-stone-900 antialiased;
   }
 }

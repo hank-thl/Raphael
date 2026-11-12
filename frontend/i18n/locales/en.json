@@ -1,0 +1,172 @@
+{
+  "meta": {
+    "title": "Raphael · Personal memory assistant",
+    "description": "Your personal journal and memory assistant"
+  },
+  "common": {
+    "language": "Interface language",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "processing": "Processing…",
+    "logout": "Sign out",
+    "loggingOut": "Signing out…",
+    "home": "Back to home",
+    "backChat": "Back to chat",
+    "openChat": "Open chat",
+    "openingChat": "Opening chat…",
+    "loading": "Loading…",
+    "refresh": "Refresh"
+  },
+  "home": {
+    "title": "Keep a little of everyday life.",
+    "description": "Thoughts, moments, everyday life — start with a few words. Sign in to your own journal."
+  },
+  "login": {
+    "signedIn": "Signed in",
+    "heading": "Sign in to your journal",
+    "checking": "Checking your session…",
+    "allowedOnly": "Available to approved Google accounts only.",
+    "notConfigured": "Sign-in setup is incomplete.",
+    "unavailable": "Unable to check your session right now.",
+    "signingIn": "Signing in…",
+    "google": "Sign in with Google",
+    "initFailed": "Unable to initialize sign-in. Check the settings and reload."
+  },
+  "chat": {
+    "title": "Capture a moment",
+    "mode": "Journal",
+    "subtitle": "A place for your thoughts.",
+    "primaryNav": "Main navigation",
+    "quickNav": "Quick navigation",
+    "personalSpace": "YOUR PERSONAL SPACE",
+    "motto": "Every little moment is worth remembering.",
+    "me": "Me",
+    "account": "My account",
+    "memorySpace": "Your memory space",
+    "closeAccount": "Close account menu",
+    "googleAccount": "Google account",
+    "manageAccounts": "Manage allowed accounts",
+    "private": "Personal journal · Only you can see it",
+    "history": "Message history",
+    "welcome": "The little things matter, too.",
+    "welcomeDetail": "A thought, a conversation, or how you feel today. No need to organize it — start with a sentence.",
+    "loadingHistory": "Loading…",
+    "retryHistory": "Reload messages",
+    "older": "↑ Load earlier messages",
+    "empty": "No entries yet. Start with one little thing from today.",
+    "expired": "Your session has expired. Please sign in again.",
+    "loginNewTab": "Sign in in a new tab",
+    "checkSaved": "Refresh to check whether it was saved. Load earlier entries if needed.",
+    "allowRetry": "I checked: it was not saved. Allow resend.",
+    "savedAnnouncement": "Message saved.",
+    "accountChanged": "The signed-in account changed. Reopen the chat.",
+    "removedAnnouncement": "Entry removed from the chat.",
+    "deleteUnknown": "Unable to confirm deletion. Cancel and refresh to check. The original remains in the database.",
+    "discardLogout": "You have unsaved text. Discard it and sign out?",
+    "logoutFailed": "Sign-out failed. Please try again later."
+  },
+  "composer": {
+    "label": "What you want to remember",
+    "placeholder": "What would you like to remember?",
+    "send": "Send message",
+    "tooLong": "Over 10,000 characters. Shorten the text before sending."
+  },
+  "bubble": {
+    "sending": "Sending",
+    "uncertain": "Save not confirmed",
+    "unsaved": "Not saved",
+    "saved": "Saved",
+    "actions": "Message actions"
+  },
+  "actions": {
+    "title": "Delete this entry?",
+    "description": "It will be hidden from the chat. The original remains in the database. Restoring entries is not available yet.",
+    "choose": "Choose an action for this entry.",
+    "delete": "Delete entry",
+    "deleting": "Deleting…",
+    "confirm": "Confirm deletion"
+  },
+  "admin": {
+    "nav": "Accounts",
+    "title": "Allowed accounts",
+    "description": "Add a Google email to grant access. Disabling blocks future access and keeps existing entries.",
+    "email": "Google account email",
+    "add": "Add allowed account",
+    "listFailed": "Unable to load the list. Check your session and refresh.",
+    "legacy": "Existing allowed account (add its email to complete the details)",
+    "role": "Administrator",
+    "enabled": "Allowed",
+    "disabled": "Disabled",
+    "disable": "Disable",
+    "enable": "Re-enable",
+    "activate": "Enable",
+    "updated": "Allowed accounts updated.",
+    "refreshFailed": "The action completed, but the list could not be loaded. Please refresh.",
+    "unknown": "Unable to confirm the result. Refresh to check, or verify admin sign-in and Firebase settings before retrying.",
+    "unavailable": "Unable to open account management",
+    "confirm": "{action} access for {account}? Personal entries will be kept."
+  },
+  "record": {
+    "heading": "What would you like to remember today?",
+    "help": "A thought, someone you met, or a little thing worth keeping.",
+    "placeholder": "Start writing here…",
+    "count": "{count} / 10,000 characters",
+    "save": "Save entry",
+    "list": "Personal entries",
+    "deleteLabel": "Delete entry from {time}"
+  },
+  "validation": {
+    "empty": "Please write something first.",
+    "tooLong": "Each entry can contain up to 10,000 characters. Shorten it before saving."
+  },
+  "errors": {
+    "unauthenticated": "Your session expired. Sign in and try again. Unsent text stays on this page.",
+    "forbidden": "This action was not allowed. Check your account or refresh and try again.",
+    "notFound": "This entry no longer exists. Please refresh the list.",
+    "invalid": "Check that the text is not blank and is within 10,000 characters.",
+    "generic": "Unable to complete the action. Check your connection and try again.",
+    "saveUnknown": "Unable to confirm the save. Your text has been kept. Refresh the list before retrying to avoid duplicates.",
+    "authService": "Sign-in is temporarily unavailable. Please try again later."
+  },
+  "languages": {
+    "zh-TW": "繁體中文",
+    "ja": "日本語",
+    "en": "English",
+    "th": "ไทย"
+  },
+  "auth": {
+    "google": "Google verification",
+    "csrf": "Sign-in security check",
+    "session": "Session creation",
+    "profile": "Session check",
+    "cookie": "Sign-in was submitted, but no valid session was retained. Allow cookies and use the same site URL throughout sign-in.",
+    "failed": "{stage} failed{status}{detail}",
+    "status": " (HTTP {status})",
+    "detail": ": {detail}",
+    "retry": ". Please try again later.",
+    "googleErrors": {
+      "popup-closed-by-user": "You cancelled Google sign-in.",
+      "popup-blocked": "Allow the Google sign-in popup in your browser and try again.",
+      "cancelled-popup-request": "Another sign-in window is open. Complete it before trying again.",
+      "unauthorized-domain": "This site is not in Firebase Authorized domains. Check the configuration.",
+      "operation-not-allowed": "Google sign-in is not enabled for this Firebase project.",
+      "admin-restricted-operation": "Firebase rejected this account. Check the pre-created account and its Google identity link.",
+      "account-exists-with-different-credential": "This email uses another sign-in method. Check the account linking first.",
+      "network-request-failed": "Unable to reach Google or Firebase. Check your connection.",
+      "invalid-api-key": "The Firebase public configuration is invalid. Check the API Key and project.",
+      "user-disabled": "This account has been disabled.",
+      "invalid-credential": "The Google credential is invalid. Please sign in again."
+    },
+    "backend": {
+      "d0": "Request origin is not allowed",
+      "d1": "Reload the page and try again",
+      "d2": "This account has not been granted access",
+      "d3": "Only Google sign-in is allowed",
+      "d4": "Sign-in setup is incomplete",
+      "d5": "Sign-in is temporarily unavailable",
+      "d6": "Your session is invalid. Please sign in again",
+      "d7": "Please sign in with Google again",
+      "d8": "Please sign in first"
+    }
+  }
+}

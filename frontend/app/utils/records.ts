@@ -1,12 +1,13 @@
+import { defaultTranslate, type Translate } from './translate.ts'
 import type { PersonalRecord, RecordPage } from '../types/record.ts'
 
 export function recordCharacterCount(content: string): number {
   return Array.from(content).length
 }
 
-export function recordValidation(content: string): string {
-  if (!content.trim()) return '請先寫下一段文字。'
-  if (recordCharacterCount(content) > 10000) return '每筆紀錄最多一萬字，請縮短後再儲存。'
+export function recordValidation(content: string, t: Translate = defaultTranslate): string {
+  if (!content.trim()) return t('validation.empty')
+  if (recordCharacterCount(content) > 10000) return t('validation.tooLong')
   return ''
 }
 
@@ -28,26 +29,26 @@ export function recordErrorStatus(error: unknown): number | undefined {
   return failure.statusCode ?? failure.response?.status
 }
 
-export function recordErrorMessage(error: unknown): string {
+export function recordErrorMessage(error: unknown, t: Translate = defaultTranslate): string {
   const status = recordErrorStatus(error)
-  if (status === 401) return '登入已過期，請重新登入後再試一次。尚未送出的文字會保留在此頁。'
-  if (status === 403) return '這次操作未獲允許，請確認登入帳號，或重新整理後再試。'
-  if (status === 404) return '這筆紀錄已不存在，請重新整理列表。'
-  if (status === 422) return '內容不符合格式，請確認不是空白，且未超過一萬字。'
-  return '暫時無法完成操作，請確認連線後重試。'
+  if (status === 401) return t('errors.unauthenticated')
+  if (status === 403) return t('errors.forbidden')
+  if (status === 404) return t('errors.notFound')
+  if (status === 422) return t('errors.invalid')
+  return t('errors.generic')
 }
 
-export function formatRecordTime(value: string): string {
-  return new Intl.DateTimeFormat('zh-TW', {
+export function formatRecordTime(value: string, locale = 'zh-TW'): string {
+  return new Intl.DateTimeFormat(locale, {
     timeZone: 'Asia/Taipei', year: 'numeric', month: '2-digit', day: '2-digit',
     hour: '2-digit', minute: '2-digit', hour12: false,
   }).format(new Date(value))
 }
 
-export function recordSaveErrorMessage(error: unknown): string {
+export function recordSaveErrorMessage(error: unknown, t: Translate = defaultTranslate): string {
   const status = recordErrorStatus(error)
   if (status === undefined || status >= 500) {
-    return '無法確認是否儲存成功。文字尚未清除，請先重新整理列表確認，避免重複儲存。'
+    return t('errors.saveUnknown')
   }
-  return recordErrorMessage(error)
+  return recordErrorMessage(error, t)
 }

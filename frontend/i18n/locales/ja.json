@@ -1,0 +1,172 @@
+{
+  "meta": {
+    "title": "Raphael｜個人メモリーアシスタント",
+    "description": "Raphael 個人の記録と記憶のアシスタント"
+  },
+  "common": {
+    "language": "表示言語",
+    "cancel": "キャンセル",
+    "delete": "削除",
+    "processing": "処理中…",
+    "logout": "ログアウト",
+    "loggingOut": "ログアウト中…",
+    "home": "ホームへ",
+    "backChat": "チャットに戻る",
+    "openChat": "チャットを開く",
+    "openingChat": "チャットを開いています…",
+    "loading": "読み込み中…",
+    "refresh": "更新"
+  },
+  "home": {
+    "title": "日々の記憶を、少しずつ。",
+    "description": "思いつきも、何気ない瞬間も、ひとことから。ログインして、自分だけの記録を始めましょう。"
+  },
+  "login": {
+    "signedIn": "ログイン済み",
+    "heading": "自分の記録にログイン",
+    "checking": "ログイン状態を確認中…",
+    "allowedOnly": "許可された Google アカウントのみ利用できます。",
+    "notConfigured": "ログインの設定が完了していません。",
+    "unavailable": "ログイン状態を確認できません。",
+    "signingIn": "ログイン中…",
+    "google": "Google でログイン",
+    "initFailed": "ログインを初期化できません。設定を確認して再読み込みしてください。"
+  },
+  "chat": {
+    "title": "今を記録する",
+    "mode": "記録モード",
+    "subtitle": "思いを置いておける場所。",
+    "primaryNav": "メインナビゲーション",
+    "quickNav": "クイックナビゲーション",
+    "personalSpace": "自分だけの場所",
+    "motto": "小さな瞬間も、大切な思い出に。",
+    "me": "自分",
+    "account": "マイアカウント",
+    "memorySpace": "自分だけの記憶の場所",
+    "closeAccount": "アカウントメニューを閉じる",
+    "googleAccount": "Google アカウント",
+    "manageAccounts": "許可アカウントの管理",
+    "private": "個人の記録 · 自分だけに表示",
+    "history": "過去のメッセージ",
+    "welcome": "日々の小さなことも、大切に。",
+    "welcomeDetail": "思いつきや会話、今日の気持ち。まとまっていなくても、ひとことから始められます。",
+    "loadingHistory": "読み込み中…",
+    "retryHistory": "メッセージを再読み込み",
+    "older": "↑ 以前のメッセージを読み込む",
+    "empty": "まだ記録がありません。今日の小さな出来事を書いてみましょう。",
+    "expired": "ログインの有効期限が切れました。再度ログインしてください。",
+    "loginNewTab": "新しいタブでログイン",
+    "checkSaved": "まず「更新」で保存済みか確認してください。必要に応じて以前の記録も読み込んでください。",
+    "allowRetry": "未保存を確認したので再送する",
+    "savedAnnouncement": "メッセージを保存しました。",
+    "accountChanged": "アカウントが変更されました。チャットを開き直してください。",
+    "removedAnnouncement": "記録をチャットから削除しました。",
+    "deleteUnknown": "削除結果を確認できません。キャンセルして更新してください。原文はデータベースに残ります。",
+    "discardLogout": "未保存のテキストがあります。破棄してログアウトしますか？",
+    "logoutFailed": "ログアウトできませんでした。後でもう一度お試しください。"
+  },
+  "composer": {
+    "label": "記録したいこと",
+    "placeholder": "今、何を記録しますか？",
+    "send": "メッセージを送信",
+    "tooLong": "10,000文字を超えています。短くしてから送信してください。"
+  },
+  "bubble": {
+    "sending": "送信中",
+    "uncertain": "保存結果未確認",
+    "unsaved": "未保存",
+    "saved": "保存済み",
+    "actions": "メッセージの操作"
+  },
+  "actions": {
+    "title": "この記録を削除しますか？",
+    "description": "チャットから非表示になりますが、原文はデータベースに残ります。現在、復元機能はありません。",
+    "choose": "この記録に対する操作を選んでください。",
+    "delete": "記録を削除",
+    "deleting": "削除中…",
+    "confirm": "削除する"
+  },
+  "admin": {
+    "nav": "アカウント管理",
+    "title": "許可アカウントの管理",
+    "description": "Google のメールアドレスを追加すると利用を許可します。無効化すると以降のアクセスを拒否しますが、記録は残ります。",
+    "email": "Google アカウントのメールアドレス",
+    "add": "許可アカウントを追加",
+    "listFailed": "一覧を読み込めません。ログイン状態を確認して更新してください。",
+    "legacy": "既存の許可アカウント（メールで追加すると情報を補完できます）",
+    "role": "管理者",
+    "enabled": "許可済み",
+    "disabled": "無効",
+    "disable": "無効にする",
+    "enable": "再び有効にする",
+    "activate": "有効にする",
+    "updated": "許可リストを更新しました。",
+    "refreshFailed": "操作は完了しましたが、一覧を取得できません。更新してください。",
+    "unknown": "結果を確認できません。更新して確認するか、管理者のログインと Firebase 設定を確認してください。",
+    "unavailable": "管理画面を開けません",
+    "confirm": "{account} の利用を{action}にしますか？個人の記録は残ります。"
+  },
+  "record": {
+    "heading": "今日は何を記録しますか？",
+    "help": "思いつき、出会った人、残しておきたい小さなこと。",
+    "placeholder": "ここから書き始めましょう…",
+    "count": "{count} / 10,000文字",
+    "save": "記録を保存",
+    "list": "個人の記録",
+    "deleteLabel": "{time} の記録を削除"
+  },
+  "validation": {
+    "empty": "まずテキストを入力してください。",
+    "tooLong": "1件につき10,000文字までです。短くしてから保存してください。"
+  },
+  "errors": {
+    "unauthenticated": "ログインの有効期限が切れました。再度ログインしてください。未送信のテキストはこのページに残ります。",
+    "forbidden": "この操作は許可されていません。アカウントを確認するか、更新してお試しください。",
+    "notFound": "この記録はありません。一覧を更新してください。",
+    "invalid": "内容を確認してください。空白だけ、または10,000文字を超える記録は保存できません。",
+    "generic": "操作を完了できません。接続を確認してお試しください。",
+    "saveUnknown": "保存できたか確認できません。テキストは残っています。重複保存を避けるため、まず一覧を更新してください。",
+    "authService": "ログインサービスを利用できません。後でもう一度お試しください。"
+  },
+  "languages": {
+    "zh-TW": "繁體中文",
+    "ja": "日本語",
+    "en": "English",
+    "th": "ไทย"
+  },
+  "auth": {
+    "google": "Google 認証",
+    "csrf": "ログインのセキュリティ確認",
+    "session": "セッションの作成",
+    "profile": "ログイン状態の確認",
+    "cookie": "ログインを送信しましたが、セッションを保存できませんでした。Cookie を許可し、同じ URL でログインしてください。",
+    "failed": "{stage}に失敗しました{status}{detail}",
+    "status": "（HTTP {status}）",
+    "detail": "：{detail}",
+    "retry": "。後でもう一度お試しください。",
+    "googleErrors": {
+      "popup-closed-by-user": "Google ログインをキャンセルしました。",
+      "popup-blocked": "ブラウザーで Google のログイン画面を許可してからお試しください。",
+      "cancelled-popup-request": "別のログイン画面が開いています。そちらを完了してください。",
+      "unauthorized-domain": "Firebase の承認済みドメインにこのサイトを追加してください。",
+      "operation-not-allowed": "Firebase で Google ログインを有効にしてください。",
+      "admin-restricted-operation": "このアカウントのログインが拒否されました。事前登録と Google との連携を確認してください。",
+      "account-exists-with-different-credential": "このメールアドレスは別の認証方法に登録されています。アカウント連携を確認してください。",
+      "network-request-failed": "Google／Firebase に接続できません。ネットワークを確認してください。",
+      "invalid-api-key": "Firebase の公開設定を利用できません。API Key とプロジェクトを確認してください。",
+      "user-disabled": "このアカウントは無効です。",
+      "invalid-credential": "Google の認証情報を利用できません。再度ログインしてください。"
+    },
+    "backend": {
+      "d0": "許可されていないリクエスト元です",
+      "d1": "ページを再読み込みしてお試しください",
+      "d2": "このアカウントには利用権限がありません",
+      "d3": "Google ログインのみ利用できます",
+      "d4": "ログイン設定が完了していません",
+      "d5": "ログインサービスを利用できません",
+      "d6": "有効期限が切れました。再度ログインしてください",
+      "d7": "Google ログインをやり直してください",
+      "d8": "まずログインしてください"
+    }
+  }
+}

@@ -3,6 +3,18 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineNuxtConfig({
   compatibilityDate: '2025-11-01',
   devtools: { enabled: false },
+  modules: ['@nuxtjs/i18n'],
+  i18n: {
+    strategy: 'no_prefix',
+    defaultLocale: 'zh-TW',
+    detectBrowserLanguage: false,
+    locales: [
+      { code: 'zh-TW', language: 'zh-TW', file: 'zh-TW.json' },
+      { code: 'ja', language: 'ja', file: 'ja.json' },
+      { code: 'en', language: 'en', file: 'en.json' },
+      { code: 'th', language: 'th', file: 'th.json' },
+    ],
+  },
   css: ['~/assets/css/main.css'],
   vite: { plugins: [tailwindcss()] },
   typescript: { strict: true },
@@ -20,10 +32,7 @@ export default defineNuxtConfig({
   },
   app: {
     head: {
-      htmlAttrs: { lang: 'zh-Hant' },
-      title: 'Raphael｜個人記憶助手',
       meta: [
-        { name: 'description', content: 'Raphael 個人紀錄與記憶助手' },
         { name: 'theme-color', content: '#304d40' },
         { name: 'apple-mobile-web-app-title', content: 'Raphael' },
       ],
