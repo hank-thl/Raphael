@@ -48,9 +48,14 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', onOutsidePoint
     <label class="relative min-h-11 min-w-0 max-w-full items-center  text-sm text-chat-green" :class="compact ? 'hidden min-w-11 justify-center rounded-lg sm:inline-flex' : 'inline-flex'">
       <span class="sr-only">{{ t('common.language') }}</span>
       <svg class="size-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c5 5 5 13 0 18-5-5-5-13 0-18Z" /></svg>
-      <select :value="locale" :disabled="busy" :aria-label="t('common.language')" :class="compact && 'absolute inset-0 w-full opacity-0 sm:static sm:w-auto sm:opacity-100'" class="min-h-11 min-w-0 max-w-36 cursor-pointer rounded-lg bg-chat-paper px-2 text-sm outline-none  disabled:opacity-50" @change="change">
-        <option v-for="code in supportedLocales" :key="code" :value="code" :lang="code">{{ t(`languages.${code}`) }}</option>
-      </select>
+      <span class="relative inline-grid min-h-11 items-center text-sm">
+        <!-- Measure only the selected label; the absolute select cannot size itself from the longest option. -->
+        <span aria-hidden="true" class="invisible whitespace-nowrap pr-5 pl-2">{{ t(`languages.${locale}`) }}</span>
+        <select :value="locale" :disabled="busy" :aria-label="t('common.language')" class="absolute inset-0 h-full w-full min-w-0 cursor-pointer appearance-none rounded-lg bg-chat-paper pr-5 pl-2 text-sm outline-none disabled:opacity-50" @change="change">
+          <option v-for="code in supportedLocales" :key="code" :value="code" :lang="code">{{ t(`languages.${code}`) }}</option>
+        </select>
+        <svg class="pointer-events-none absolute right-1 size-3" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m4 6 4 4 4-4" stroke-linecap="round" stroke-linejoin="round" /></svg>
+      </span>
     </label>
   </div>
 </template>
