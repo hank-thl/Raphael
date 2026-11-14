@@ -14,6 +14,8 @@ class Settings:
     session_seconds: int = 1209600
     mongodb_uri: str = field(default="", repr=False)
     mongodb_database: str = "raphael_dev"
+    gemini_api_key: str = field(default="", repr=False)
+    gemini_model: str = ""
 
     @property
     def auth_ready(self) -> bool:
@@ -40,4 +42,6 @@ def get_settings() -> Settings:
         session_seconds=session_seconds,
         mongodb_uri=os.getenv("MONGODB_URI", "").strip(),
         mongodb_database=os.getenv("MONGODB_DATABASE", "raphael_dev").strip(),
+        gemini_api_key=os.getenv("GEMINI_API_KEY", "").strip(),
+        gemini_model=os.getenv("GEMINI_MODEL", "").strip(),
     )

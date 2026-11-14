@@ -1095,13 +1095,13 @@ source = { virtual = "." }
 dependencies = [
     { name = "fastapi" },
     { name = "firebase-admin" },
+    { name = "httpx" },
     { name = "pymongo" },
     { name = "uvicorn" },
 ]
 
 [package.dev-dependencies]
 dev = [
-    { name = "httpx" },
     { name = "pytest" },
 ]
 
@@ -1109,15 +1109,13 @@ dev = [
 requires-dist = [
     { name = "fastapi", specifier = ">=0.115,<1.0" },
     { name = "firebase-admin", specifier = ">=7.0,<8.0" },
+    { name = "httpx", specifier = ">=0.28,<1.0" },
     { name = "pymongo", specifier = ">=4.14,<5.0" },
     { name = "uvicorn", specifier = ">=0.34,<1.0" },
 ]
 
 [package.metadata.requires-dev]
-dev = [
-    { name = "httpx", specifier = ">=0.28,<1.0" },
-    { name = "pytest", specifier = ">=8.3,<10.0" },
-]
+dev = [{ name = "pytest", specifier = ">=8.3,<10.0" }]
 
 [[package]]
 name = "requests"
