@@ -33,7 +33,10 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--case', choices=['multi', 'context', 'noise'], default='multi')
     parser.add_argument('--save', action='store_true', help='Write synthetic trial records and analysis; call Gemini on cache miss')
+    parser.add_argument('--with-versions', action='store_true', help='For context only: explicitly link baseline and supplement as two revisions')
     args = parser.parse_args()
+    if args.with_versions and args.case != 'context':
+        parser.error('--with-versions requires --case context')
     if not args.save:
         print(example(args.case).model_dump_json(indent=2))
         print('Dry run: add --save to write isolated trial collections and call Gemini.')
@@ -54,6 +57,9 @@ def main():
                                            ContentTypesRepository(db['memory_trial_content_types']))
         service = MemoryCaptureService(records, analyses, classifier, settings.gemini_model)
         ids = seed(records, args.case)
+        baseline = None
+        if args.with_versions:
+            baseline, _ = service.capture(OWNER, ids[1])
         document, reused = service.capture(OWNER, ids[0], ids[1:])
         if service.get_eligible(OWNER, document['_id']) is None:
             raise CaptureError('sources_no_longer_eligible')
@@ -62,6 +68,23 @@ def main():
                           'memory_ids': [item['_id'] for item in document['memories']],
                           'memory_action': document['analysis']['memory_action'],
                           'processing': document['processing']}, ensure_ascii=False, indent=2))
+        if args.with_versions:
+            from app.repositories.memories import MemoriesRepository
+            from app.services.memory_versions import MemoryVersionsService
+            if len(baseline['memories']) != 1 or len(document['memories']) != 1:
+                raise CaptureError('trial_requires_one_candidate_per_analysis')
+            versions = MemoryVersionsService(service, MemoriesRepository(db['memory_trial_memories']))
+            memory = versions.create(OWNER, baseline['_id'], baseline['memories'][0]['_id'])
+            memory, version_reused = versions.supplement(OWNER, memory['_id'], 1,
+                document['_id'], document['memories'][0]['_id'])
+            if versions.get_eligible(OWNER, memory['_id']) is None:
+                raise CaptureError('memory_no_longer_eligible')
+            print(json.dumps({'memory_id': memory['_id'], 'revision': memory['revision'],
+                              'version_reused': version_reused, 'versions': [
+                                  {'revision': row['revision'], 'text': row['content']['text'],
+                                   'source_record_ids': [source['record_id'] for source in row['content']['evidence']['sources']]}
+                                  for row in memory['versions']]}, ensure_ascii=False, indent=2))
+            print('Explicit synthetic same-event link saved in memory_trial_memories; no automatic event matching.')
         print('Saved only synthetic data in memory_trial_records / memory_trial_analyses / memory_trial_content_types.')
         return 0
     except (GeminiError, CaptureError) as exc:
