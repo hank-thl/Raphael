@@ -69,7 +69,7 @@ def _reject_constant(value):
     raise ValueError("Invalid JSON constant")
 
 
-def generation_schema() -> dict:
+def generation_schema(model=ExtractionResult) -> dict:
     """Keep generation constraints small; enforce full limits locally afterwards.
 
     The full nested Pydantic schema causes INVALID_ARGUMENT on the configured
@@ -83,7 +83,7 @@ def generation_schema() -> dict:
             return [simplify(item) for item in value]
         return value
 
-    return simplify(ExtractionResult.model_json_schema())
+    return simplify(model.model_json_schema())
 
 
 class GeminiExtractor:
@@ -100,16 +100,25 @@ class GeminiExtractor:
         return f"GeminiExtractor(model={self.model!r})"
 
     def analyze(self, data: ExtractionInput) -> ExtractionResult:
+        decoded = self.generate(data.model_dump_json(), generation_schema(), SYSTEM_INSTRUCTION)
+        try:
+            result = ExtractionResult.model_validate(decoded)
+            result.validate_sources(data)
+            return result
+        except (ValueError, TypeError):
+            raise GeminiError("invalid_response") from None
+
+    def generate(self, input_json: str, schema: dict, instruction: str):
         if not self._api_key or not re.fullmatch(r"gemini-[A-Za-z0-9.-]+", self.model):
             raise GeminiError("not_configured")
         payload = {
-            "systemInstruction": {"parts": [{"text": SYSTEM_INSTRUCTION}]},
-            "contents": [{"role": "user", "parts": [{"text": data.model_dump_json()}]}],
+            "systemInstruction": {"parts": [{"text": instruction}]},
+            "contents": [{"role": "user", "parts": [{"text": input_json}]}],
             "generationConfig": {
                 "candidateCount": 1,
                 "maxOutputTokens": 8192,
                 "responseMimeType": "application/json",
-                "responseJsonSchema": generation_schema(),
+                "responseJsonSchema": schema,
             },
         }
         timeout = httpx.Timeout(connect=10, read=self._read_timeout, write=10, pool=5)
@@ -161,9 +170,7 @@ class GeminiExtractor:
                     raise GeminiError("invalid_response")
                 texts.append(part["text"])
             decoded = json.loads("".join(texts), object_pairs_hook=_unique_object, parse_constant=_reject_constant)
-            result = ExtractionResult.model_validate(decoded)
-            result.validate_sources(data)
-            return result
+            return decoded
         except GeminiError:
             raise
         except (ValueError, KeyError, TypeError, AttributeError):

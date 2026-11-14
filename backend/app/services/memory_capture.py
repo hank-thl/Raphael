@@ -56,6 +56,15 @@ class MemoryCaptureService:
         if existing is not None:
             return existing, True
         result, category_id = self.classifier.analyze(uid, data)
+        return self.persist(uid, data, result, category_id, identifier, {
+            'state': 'succeeded', 'provider': 'gemini', 'model': self.model,
+            'prompt_version': PROMPT_VERSION, 'contract_version': CONTRACT_VERSION}), False
+
+    def persist(self, uid, data, result, category_id, identifier, processing):
+        target_id = data.target.record_id
+        context_ids = [row.record_id for row in data.context]
+        timezone_name = data.timezone
+        source_snapshot = snapshots(data)
         # Revalidate even if an alternate classifier is plugged in.
         result = ExtractionResult.model_validate(result.model_dump())
         result.validate_sources(data)
@@ -71,10 +80,9 @@ class MemoryCaptureService:
                     'context_record_ids': list(context_ids), 'source_snapshot': source_snapshot,
                     'timezone': timezone_name, 'content_type_id': category_id,
                     'analysis': result.model_dump(exclude={'items'}), 'memories': memories,
-                    'processing': {'state': 'succeeded', 'provider': 'gemini', 'model': self.model,
-                                   'prompt_version': PROMPT_VERSION, 'contract_version': CONTRACT_VERSION},
+                    'processing': processing,
                     'created_at': now}
-        return self.analyses.create_once(document), False
+        return self.analyses.create_once(document)
 
     def get_eligible(self, uid, identifier):
         document = self.analyses.get(uid, identifier)

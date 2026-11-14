@@ -34,9 +34,12 @@ def main():
     parser.add_argument('--case', choices=['multi', 'context', 'noise'], default='multi')
     parser.add_argument('--save', action='store_true', help='Write synthetic trial records and analysis; call Gemini on cache miss')
     parser.add_argument('--with-versions', action='store_true', help='For context only: explicitly link baseline and supplement as two revisions')
+    parser.add_argument('--auto-match', action='store_true', help='For context only: let Gemini choose new/supplement/uncertain in separate trial collections')
     args = parser.parse_args()
     if args.with_versions and args.case != 'context':
         parser.error('--with-versions requires --case context')
+    if args.auto_match and (args.case != 'context' or args.with_versions):
+        parser.error('--auto-match requires --case context and cannot combine with --with-versions')
     if not args.save:
         print(example(args.case).model_dump_json(indent=2))
         print('Dry run: add --save to write isolated trial collections and call Gemini.')
@@ -46,20 +49,25 @@ def main():
         print('Capture failed: not_configured')
         return 1
     connection = DatabaseConnection(settings)
+    stage = 'database_initialization'
     try:
         connection.open()
         if connection.database is None:
             raise CaptureError('database_unavailable')
         db = connection.database
-        records = db['memory_trial_records']
-        analyses = AnalysesRepository(db['memory_trial_analyses'])
+        prefix = 'memory_auto_trial' if args.auto_match else 'memory_trial'
+        records = db[f'{prefix}_records']
+        analyses = AnalysesRepository(db[f'{prefix}_analyses'])
         classifier = ClassificationService(GeminiExtractor(settings.gemini_api_key, settings.gemini_model),
-                                           ContentTypesRepository(db['memory_trial_content_types']))
+                                           ContentTypesRepository(db[f'{prefix}_content_types']))
         service = MemoryCaptureService(records, analyses, classifier, settings.gemini_model)
+        stage = 'seed_synthetic_records'
         ids = seed(records, args.case)
         baseline = None
-        if args.with_versions:
+        if args.with_versions or args.auto_match:
+            stage = 'baseline_analysis'
             baseline, _ = service.capture(OWNER, ids[1])
+        stage = 'incoming_analysis'
         document, reused = service.capture(OWNER, ids[0], ids[1:])
         if service.get_eligible(OWNER, document['_id']) is None:
             raise CaptureError('sources_no_longer_eligible')
@@ -68,7 +76,24 @@ def main():
                           'memory_ids': [item['_id'] for item in document['memories']],
                           'memory_action': document['analysis']['memory_action'],
                           'processing': document['processing']}, ensure_ascii=False, indent=2))
+        if args.auto_match:
+            from app.repositories.memories import MemoriesRepository
+            from app.services.memory_versions import MemoryVersionsService
+            from app.services.memory_matching import GeminiMemoryMatcher
+            from app.services.memory_routing import MemoryRoutingService
+            versions = MemoryVersionsService(service, MemoriesRepository(db[f'{prefix}_memories']))
+            router = MemoryRoutingService(service, versions,
+                GeminiMemoryMatcher(GeminiExtractor(settings.gemini_api_key, settings.gemini_model)),
+                AnalysesRepository(db[f'{prefix}_routes']))
+            for item in baseline['memories']:
+                stage = 'route_baseline'
+                router.route(OWNER, baseline['_id'], item['_id'])
+            stage = 'route_incoming'
+            outcomes = [router.route(OWNER, document['_id'], item['_id']) for item in document['memories']]
+            print(json.dumps({'routing': outcomes, 'matching_version': 'memory-match-v1'}, ensure_ascii=False, indent=2))
+            print('Saved synthetic automatic matching data only in memory_auto_trial_* collections.')
         if args.with_versions:
+            stage = 'explicit_versions'
             from app.repositories.memories import MemoriesRepository
             from app.services.memory_versions import MemoryVersionsService
             if len(baseline['memories']) != 1 or len(document['memories']) != 1:
@@ -85,13 +110,16 @@ def main():
                                    'source_record_ids': [source['record_id'] for source in row['content']['evidence']['sources']]}
                                   for row in memory['versions']]}, ensure_ascii=False, indent=2))
             print('Explicit synthetic same-event link saved in memory_trial_memories; no automatic event matching.')
-        print('Saved only synthetic data in memory_trial_records / memory_trial_analyses / memory_trial_content_types.')
+        if not args.auto_match:
+            print('Saved only synthetic data in memory_trial_records / memory_trial_analyses / memory_trial_content_types.')
         return 0
     except (GeminiError, CaptureError) as exc:
         print(f'Capture failed: {exc.reason if isinstance(exc, GeminiError) else str(exc)}')
+        print(f'Stage: {stage}')
         return 1
     except Exception:
         print('Capture failed: storage_or_validation_failed. No raw errors are displayed.')
+        print(f'Stage: {stage}')
         return 1
     finally:
         connection.close()

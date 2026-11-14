@@ -14,6 +14,10 @@ class MemoriesRepository:
     def get(self, uid, identifier):
         return self.collection.find_one({'_id': identifier, 'user_uid': uid})
 
+    def recent(self, uid):
+        return self.collection.find({'user_uid': uid, 'lifecycle': 'candidate'}).sort(
+            [('updated_at', -1), ('_id', -1)])
+
     def create_once(self, document):
         try:
             self.collection.insert_one(document)
