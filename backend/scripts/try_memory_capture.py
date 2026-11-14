@@ -17,6 +17,15 @@ from scripts.try_gemini import example
 OWNER = '__raphael_synthetic_memory_v1__'
 
 
+def describe_memory(versions, uid, identifier):
+    """Use eligibility checks before displaying any historical evidence."""
+    memory = versions.get_eligible(uid, identifier)
+    if memory is None:
+        raise CaptureError('memory_no_longer_eligible')
+    return {'memory_id': memory['_id'], 'revision': memory['revision'], 'versions': [
+        {'revision': row['revision'], **row['content']} for row in memory['versions']]}
+
+
 def seed(records, case):
     data = example(case)
     ids = []
@@ -90,7 +99,9 @@ def main():
                 router.route(OWNER, baseline['_id'], item['_id'])
             stage = 'route_incoming'
             outcomes = [router.route(OWNER, document['_id'], item['_id']) for item in document['memories']]
-            print(json.dumps({'routing': outcomes, 'matching_version': 'memory-match-v1'}, ensure_ascii=False, indent=2))
+            print(json.dumps({'routing': outcomes, 'matching_version': 'memory-match-v1',
+                              'memory_details': [describe_memory(versions, OWNER, row['memory_id'])
+                                                 for row in outcomes]}, ensure_ascii=False, indent=2))
             print('Saved synthetic automatic matching data only in memory_auto_trial_* collections.')
         if args.with_versions:
             stage = 'explicit_versions'
