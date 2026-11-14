@@ -176,7 +176,7 @@ def test_stored_candidate_datetime_and_uid_never_enter_matching_payload():
         return httpx.Response(200, json={'candidates': [{'finishReason': 'STOP', 'content': {'parts': [
             {'text': json.dumps({'action': 'uncertain', 'memory_id': None, 'merged': None})}]}}]})
     candidate = {'_id': 'system-id', 'user_uid': 'private-owner', 'created_at': datetime.now(timezone.utc),
-                 'lifecycle': 'candidate', 'text': '今天上課很開心', 'kind': ['event', 'emotion'],
+                 'lifecycle': 'candidate', 'text': '今天上課很開心', 'kind': ['event', 'emotion'], 'topics': ['陶藝'],
                  'status': 'occurred', 'time_text': '今天',
                  'evidence': {'type': 'explicit', 'sources': [{'record_id': 'source', 'quote': '很開心'}]}}
     matcher = GeminiMemoryMatcher(GeminiExtractor('fake', 'gemini-test', transport=httpx.MockTransport(handler)))

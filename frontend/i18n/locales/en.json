@@ -178,5 +178,35 @@
     "retrying": "Retrying…",
     "unavailable": "AI status is temporarily unavailable",
     "refresh": "Check again"
+  },
+  "memoryLibrary": {
+    "nav": "Memories",
+    "title": "My memories",
+    "description": "These are AI-organized candidates. Check their versions and original quotes; they are not independently verified facts.",
+    "candidate": "Memory candidate",
+    "updated": "Updated {time}",
+    "show": "Sources and versions ({count})",
+    "hide": "Hide sources and versions",
+    "version": "Version {count}",
+    "quotes": "Original quotes",
+    "more": "Load more",
+    "empty": "No memories to display yet. Analyzing new entries may produce memory candidates.",
+    "filtered": "No memories on this page have valid sources. You can continue loading.",
+    "failed": "Unable to load memories. Check your sign-in and try again.",
+    "forbidden": "Memories are currently available only to the owner test account.",
+    "detailFailed": "Unable to load sources and versions. Click again to retry.",
+    "unavailable": "Some memories are unavailable. Their sources may have been deleted or changed.",
+    "evidence": {
+      "explicit": "Direct statement",
+      "contextual": "From context",
+      "inferred": "AI inference"
+    },
+    "states": {
+      "considering": "Considering",
+      "confirmed": "Confirmed",
+      "occurred": "Occurred",
+      "cancelled": "Cancelled"
+    },
+    "topics": "Topics"
   }
 }

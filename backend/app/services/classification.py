@@ -3,14 +3,16 @@ from app.repositories.content_types import normalize_name
 
 
 class ClassificationService:
-    def __init__(self, extractor, repository):
+    def __init__(self, extractor, repository, topics=None):
         self.extractor = extractor
         self.repository = repository
+        self.topics = topics
 
     def analyze(self, uid, data):
         # Replace caller data, never accept a caller-controlled category catalog.
         names = self.repository.list_names(uid)
-        request = data.model_copy(update={'content_types': names})
+        request = data.model_copy(update={'content_types': names,
+            'existing_topics': self.topics.list_names(uid) if self.topics else []})
         result = self.extractor.analyze(request)
         # Complete source validation before any category write, even for alternate extractors.
         result.validate_sources(request)

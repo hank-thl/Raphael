@@ -14,7 +14,7 @@ def valid_result():
     return {
         "content_type": "note", "memory_action": "extract", "context_required": False,
         "context_record_ids": [], "items": [{
-            "text": "使用者今天參加陶藝課，感到開心。", "kind": ["event", "emotion"], "status": "occurred",
+            "text": "使用者今天參加陶藝課，感到開心。", "kind": ["event", "emotion"], "topics": ["陶藝"], "status": "occurred",
             "time_text": "今天", "evidence": {"type": "explicit", "sources": [{
                 "record_id": "sample_1", "quote": "今天上陶藝課很開心",
             }]},
@@ -298,5 +298,5 @@ def test_v3_wire_schema_and_prompt_describe_multiple_kinds_and_fixed_states():
     choices = schema['status']['anyOf']
     assert choices[0]['enum'] == ['considering', 'confirmed', 'occurred', 'cancelled']
     assert choices[1] == {'type': 'null'}
-    assert CONTRACT_VERSION.endswith('-v3')
+    assert CONTRACT_VERSION.endswith('-v4')
     assert 'A feeling alone has status null' in SYSTEM_INSTRUCTION

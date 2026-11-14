@@ -241,6 +241,7 @@ onBeforeUnmount(() => {
       <p class="mx-2.5 mt-[19px] mb-[25px] text-[8px] tracking-[.2em] text-[#9da68f]">{{ t('chat.personalSpace') }}</p>
       <nav class="grid gap-[7px]">
         <NuxtLink to="/chat" class="flex min-h-[47px] items-center gap-3 rounded-[10px] bg-[#e3eadb] px-3.5 text-[12px] font-medium text-[#415e38] [&>span:first-child]:text-[20px]" aria-current="page"><span aria-hidden="true">✧</span> {{ t('chat.title') }} <span class="ml-auto rounded-[5px] bg-[#d3dfc8] px-1.5 py-px text-[10px]">{{ messages.length }}</span></NuxtLink>
+        <NuxtLink v-if="admin?.is_admin" to="/memories" class="flex min-h-[47px] items-center gap-3 rounded-[10px] px-3.5 text-[12px] text-[#7b8674]">{{ t('memoryLibrary.nav') }}</NuxtLink>
         <NuxtLink v-if="admin?.is_admin" to="/admin/users" class="flex min-h-[47px] items-center gap-3 rounded-[10px] px-3.5 text-[12px] text-[#7b8674]"><span aria-hidden="true" class="text-[20px]">▤</span> {{ t('admin.nav') }} <span aria-hidden="true" class="ml-auto">↗</span></NuxtLink>
       </nav>
       <div class="mx-3 mt-auto mb-[35px] pt-[55px] text-[11px] leading-[1.9] text-[#99a38b] [&>span]:mb-3 [&>span]:block [&>span]:text-[30px] [&>span]:text-[#a5b393]"><span aria-hidden="true">✳</span><p>{{ t('chat.motto') }}</p></div>
@@ -255,6 +256,7 @@ onBeforeUnmount(() => {
       <section v-if="accountOpen" id="chat-account-panel" class="absolute top-20 right-5 z-10 w-[min(320px,calc(100%_-_40px))] rounded-2xl border border-[#dce2d4] bg-white px-[18px] py-[15px] shadow-[0_12px_35px_#253c3418]" :aria-label="t('chat.account')" @keydown.esc="accountOpen = false">
         <div class="flex items-center justify-between text-[14px]"><strong>{{ t('chat.account') }}</strong><button type="button" class="flex min-h-11 min-w-11 items-center justify-center text-[22px] text-chat-green" :aria-label="t('chat.closeAccount')" @click="accountOpen = false">×</button></div>
         <p class="mb-2.5 text-[12px] text-chat-muted wrap-anywhere">{{ auth.user.value?.email || t('chat.googleAccount') }}</p>
+        <NuxtLink v-if="admin?.is_admin" to="/memories" class="flex min-h-11 items-center text-[13px] text-chat-green">{{ t('memoryLibrary.nav') }}</NuxtLink>
         <NuxtLink v-if="admin?.is_admin" to="/admin/users" class="flex min-h-11 items-center text-[13px] text-chat-green">{{ t('chat.manageAccounts') }} ↗</NuxtLink>
         <button type="button" class="flex min-h-11 items-center text-[13px] text-chat-green" :disabled="busy" @click="logout">{{ loggingOut ? t('common.loggingOut') : t('common.logout') }}</button>
       </section>

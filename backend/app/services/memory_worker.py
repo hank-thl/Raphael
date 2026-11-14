@@ -12,6 +12,7 @@ from app.services.memory_capture import CaptureError, MemoryCaptureService
 from app.services.memory_matching import GeminiMemoryMatcher
 from app.services.memory_routing import MemoryRoutingService
 from app.services.memory_versions import MemoryVersionsService
+from app.services.topics import MemoryTopics
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +22,7 @@ def build_pipeline(db, settings):
     capture = MemoryCaptureService(db['records'], AnalysesRepository(db['analyses']),
         ClassificationService(extractor, ContentTypesRepository(db['content_types'])), settings.gemini_model)
     versions = MemoryVersionsService(capture, MemoriesRepository(db['memories']))
+    capture.classifier.topics = MemoryTopics(versions)
     router = MemoryRoutingService(capture, versions, GeminiMemoryMatcher(extractor), AnalysesRepository(db['memory_routes']))
     return capture, router
 

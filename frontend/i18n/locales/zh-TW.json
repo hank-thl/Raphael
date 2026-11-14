@@ -178,5 +178,35 @@
     "retrying": "重試中…",
     "unavailable": "暫時無法查詢 AI 狀態",
     "refresh": "重新查詢"
+  },
+  "memoryLibrary": {
+    "nav": "記憶庫",
+    "title": "我的記憶",
+    "description": "這些是 AI 整理的候選資訊，可查看版本與原文引用；不代表已經獨立確認的事實。",
+    "candidate": "記憶候選",
+    "updated": "更新於 {time}",
+    "show": "查看來源與版本（{count}）",
+    "hide": "收起來源與版本",
+    "version": "第 {count} 版",
+    "quotes": "原文引用",
+    "more": "載入更多",
+    "empty": "目前沒有可顯示的記憶。新紀錄分析完成後，可能會產生記憶候選。",
+    "filtered": "這一頁沒有來源仍有效的記憶，可以繼續載入。",
+    "failed": "暫時無法載入記憶，請確認登入狀態後重試。",
+    "forbidden": "記憶庫目前僅開放本人測試帳號使用。",
+    "detailFailed": "無法載入來源與版本，請再按一次重試。",
+    "unavailable": "部分記憶已無法顯示，來源可能已刪除或變更。",
+    "evidence": {
+      "explicit": "原文直接陳述",
+      "contextual": "結合上下文",
+      "inferred": "AI 推測"
+    },
+    "states": {
+      "considering": "考慮中",
+      "confirmed": "已確定",
+      "occurred": "已發生",
+      "cancelled": "已取消"
+    },
+    "topics": "主題"
   }
 }

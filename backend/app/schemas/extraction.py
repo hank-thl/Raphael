@@ -21,6 +21,13 @@ class ExtractionInput(StrictModel):
     context: list[SourceRecord] = Field(default_factory=list, max_length=5)
     timezone: str | None = None
     content_types: list[str] = Field(default_factory=list, max_length=100)
+    existing_topics: list[str] = Field(default_factory=list, max_length=100)
+
+    @field_validator('existing_topics')
+    @classmethod
+    def valid_topic_catalog(cls, values):
+        from app.services.topics import normalize_topics
+        return normalize_topics(values)
 
     @field_validator("content_types")
     @classmethod
@@ -65,6 +72,8 @@ class MemoryCandidate(StrictModel):
     text: str = Field(min_length=1, max_length=4000)
     # Labels remain extensible; a memory can describe both an event and a feeling.
     kind: list[Annotated[str, Field(min_length=1, max_length=64)]] = Field(min_length=1)
+    # Missing topics is allowed only for reading legacy stored candidates.
+    topics: list[Annotated[str, Field(min_length=1, max_length=64)]] = Field(default_factory=list, max_length=8)
     status: Literal["considering", "confirmed", "occurred", "cancelled"] | None
     evidence: Evidence
     time_text: str | None = Field(max_length=500)
@@ -83,6 +92,12 @@ class MemoryCandidate(StrictModel):
         if any(not key for key in keys) or len(set(keys)) != len(keys):
             raise ValueError("Kinds must be nonblank and distinct")
         return values
+
+    @field_validator('topics')
+    @classmethod
+    def valid_topics(cls, values):
+        from app.services.topics import normalize_topics
+        return normalize_topics(values)
 
 
 class ExtractionResult(StrictModel):

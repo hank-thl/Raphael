@@ -12,7 +12,7 @@ from app.repositories.analyses import AnalysesRepository
 from app.repositories.content_types import ContentTypesRepository
 from app.repositories.memories import MemoriesRepository
 from app.services.classification import ClassificationService
-from app.services.gemini import GeminiError, GeminiExtractor
+from app.services.gemini import CONTRACT_VERSION, GeminiError, GeminiExtractor
 from app.services.memory_capture import CaptureError, MemoryCaptureService
 from app.services.memory_matching import GeminiMemoryMatcher, MATCH_VERSION
 from app.services.memory_routing import MemoryRoutingService
@@ -32,7 +32,7 @@ PREFIX = 'memory_matching_eval'
 
 def seed(records, case):
     scenario = SCENARIOS[case]
-    uid = f'__raphael_matching_eval_v1_{case}__'
+    uid = f'__raphael_matching_eval_{CONTRACT_VERSION}_{case}__'
     ids = []
     for index, content in enumerate([*scenario['baselines'], scenario['incoming']]):
         identifier = ObjectId(hashlib.sha256(f'{uid}:{index}'.encode()).hexdigest()[:24])
@@ -49,6 +49,8 @@ def evaluate(db, model, extractor, case):
     capture = MemoryCaptureService(records, AnalysesRepository(db[f'{PREFIX}_analyses']),
         ClassificationService(extractor, ContentTypesRepository(db[f'{PREFIX}_content_types'])), model)
     versions = MemoryVersionsService(capture, MemoriesRepository(db[f'{PREFIX}_memories']))
+    from app.services.topics import MemoryTopics
+    capture.classifier.topics = MemoryTopics(versions)
     baseline_ids = []
     # Fixture baselines deliberately represent distinct events. Only the incoming
     # candidate is routed by Gemini; do not secretly match baselines to each other.

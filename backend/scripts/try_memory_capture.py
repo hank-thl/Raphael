@@ -10,11 +10,11 @@ from app.db import DatabaseConnection
 from app.repositories.analyses import AnalysesRepository
 from app.repositories.content_types import ContentTypesRepository
 from app.services.classification import ClassificationService
-from app.services.gemini import GeminiError, GeminiExtractor
+from app.services.gemini import CONTRACT_VERSION, GeminiError, GeminiExtractor
 from app.services.memory_capture import CaptureError, MemoryCaptureService
 from scripts.try_gemini import example
 
-OWNER = '__raphael_synthetic_memory_v1__'
+OWNER = f'__raphael_synthetic_memory_{CONTRACT_VERSION}__'
 
 
 def describe_memory(versions, uid, identifier):
@@ -70,6 +70,10 @@ def main():
         classifier = ClassificationService(GeminiExtractor(settings.gemini_api_key, settings.gemini_model),
                                            ContentTypesRepository(db[f'{prefix}_content_types']))
         service = MemoryCaptureService(records, analyses, classifier, settings.gemini_model)
+        from app.repositories.memories import MemoriesRepository
+        from app.services.memory_versions import MemoryVersionsService
+        from app.services.topics import MemoryTopics
+        classifier.topics = MemoryTopics(MemoryVersionsService(service, MemoriesRepository(db[f'{prefix}_memories'])))
         stage = 'seed_synthetic_records'
         ids = seed(records, args.case)
         baseline = None
@@ -99,7 +103,8 @@ def main():
                 router.route(OWNER, baseline['_id'], item['_id'])
             stage = 'route_incoming'
             outcomes = [router.route(OWNER, document['_id'], item['_id']) for item in document['memories']]
-            print(json.dumps({'routing': outcomes, 'matching_version': 'memory-match-v1',
+            from app.services.memory_matching import MATCH_VERSION
+            print(json.dumps({'routing': outcomes, 'matching_version': MATCH_VERSION,
                               'memory_details': [describe_memory(versions, OWNER, row['memory_id'])
                                                  for row in outcomes]}, ensure_ascii=False, indent=2))
             print('Saved synthetic automatic matching data only in memory_auto_trial_* collections.')

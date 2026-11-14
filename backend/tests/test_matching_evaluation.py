@@ -58,14 +58,14 @@ class Model:
     def analyze(self, data):
         return ExtractionResult.model_validate({'content_type': 'journal', 'memory_action': 'extract',
             'context_required': False, 'context_record_ids': [], 'items': [{
-                'text': data.target.content, 'kind': ['event'], 'status': 'occurred', 'time_text': None,
+                'text': data.target.content, 'kind': ['event'], 'topics': ['消費'], 'status': 'occurred', 'time_text': None,
                 'evidence': {'type': 'explicit', 'sources': [{'record_id': data.target.record_id, 'quote': data.target.content}]}}]})
     def generate(self, payload, schema, instruction):
         self.calls += 1
         data = json.loads(payload)
         if self.action != 'supplement': return {'action': self.action, 'memory_id': None, 'merged': None}
         return {'action': 'supplement', 'memory_id': data['options'][0]['memory_id'], 'merged': {
-            'text': '今天買茶飲與甜點共180元，茶飲70元、甜點110元。', 'kind': ['event'], 'status': 'occurred',
+            'text': '今天買茶飲與甜點共180元，茶飲70元、甜點110元。', 'kind': ['event'], 'topics': ['消費'], 'status': 'occurred',
             'time_text': '今天', 'evidence': {'type': 'contextual', 'sources': [
                 {'record_id': row['record_id'], 'quote': row['content']} for row in data['raw_records']]}}}
 

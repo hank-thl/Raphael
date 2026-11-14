@@ -20,7 +20,8 @@ class MemoryVersionsService:
 
     def version(self, analysis, candidate, revision):
         return {'revision': revision, 'analysis_id': analysis['_id'], 'candidate_id': candidate['_id'],
-                'content': {key: candidate[key] for key in ('text', 'kind', 'status', 'evidence', 'time_text')},
+                'content': {**{key: candidate[key] for key in ('text', 'kind', 'status', 'evidence', 'time_text')},
+                            'topics': candidate.get('topics', [])},
                 'processing': analysis['processing'], 'created_at': datetime.now(timezone.utc)}
 
     def create(self, uid, analysis_id, candidate_id):
@@ -53,6 +54,11 @@ class MemoryVersionsService:
         if not old_ids < new_ids:
             raise CaptureError('supplement_sources_required')
         version = self.version(analysis, candidate, expected_revision + 1)
+        from app.services.topics import normalize_topics
+        combined = dict.fromkeys([*previous['content'].get('topics', []), *version['content']['topics']])
+        version['content']['topics'] = normalize_topics(list(combined))
+        if len(version['content']['topics']) > 8:
+            raise CaptureError('topic_limit')
         try:
             return self.memories.append(uid, memory_id, expected_revision, version), False
         except VersionConflict:

@@ -178,5 +178,35 @@
     "retrying": "再試行中…",
     "unavailable": "AIの状態を取得できません",
     "refresh": "再確認"
+  },
+  "memoryLibrary": {
+    "nav": "メモリー",
+    "title": "自分のメモリー",
+    "description": "AIが整理した候補情報です。履歴と原文を確認できますが、独立して検証された事実ではありません。",
+    "candidate": "メモリー候補",
+    "updated": "更新：{time}",
+    "show": "出典と履歴（{count}）",
+    "hide": "出典と履歴を閉じる",
+    "version": "バージョン {count}",
+    "quotes": "原文の引用",
+    "more": "さらに読み込む",
+    "empty": "表示できるメモリーはまだありません。新しい記録の分析後に候補が作成されることがあります。",
+    "filtered": "このページには出典が有効なメモリーがありません。続けて読み込めます。",
+    "failed": "メモリーを読み込めません。ログイン状態を確認して再試行してください。",
+    "forbidden": "現在は所有者のテストアカウントのみ利用できます。",
+    "detailFailed": "出典と履歴を読み込めません。もう一度押して再試行してください。",
+    "unavailable": "一部のメモリーを表示できません。出典が削除または変更された可能性があります。",
+    "evidence": {
+      "explicit": "原文の直接的な記述",
+      "contextual": "文脈からの理解",
+      "inferred": "AIの推測"
+    },
+    "states": {
+      "considering": "検討中",
+      "confirmed": "決定済み",
+      "occurred": "発生済み",
+      "cancelled": "中止"
+    },
+    "topics": "トピック"
   }
 }
