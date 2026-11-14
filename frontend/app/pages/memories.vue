@@ -17,7 +17,7 @@ const fetchPage = (cursor?: string) => requestFetch<MemoryPage>('/api/memories',
 })
 const topicKey = `${key}:topics`
 const fetchTopics = () => requestFetch<MemoryTopicPage>('/api/memories/topics', { headers: uid ? { 'X-Raphael-Account': uid } : undefined, retry: 0 })
-const { data: catalog, error: catalogError } = await useAsyncData(topicKey, fetchTopics)
+const { data: catalog, error: catalogError } = await useAsyncData(topicKey, () => browsing.value ? Promise.resolve<MemoryTopicPage>({ topics: [], unclassified_count: 0, total_count: 0 }) : fetchTopics())
 const { data: initial, error: initialError } = await useAsyncData(key, () => browsing.value ? fetchPage() : Promise.resolve<MemoryPage>({ items: [], next_cursor: null }))
 const items = ref<MemorySummary[]>(initial.value?.items || [])
 const cursor = ref<string | null>(initial.value?.next_cursor || null)
@@ -47,7 +47,6 @@ async function load(more = false) {
   busy.value = true; errorKey.value = ''; removedNotice.value = false
   const requestGeneration = ++generation
   try {
-    if (!await sameAccount()) return
     const page = await fetchPage(more ? cursor.value || undefined : undefined)
     if (!active || generation !== requestGeneration) return
     const rows = more ? [...items.value, ...page.items] : page.items
@@ -62,7 +61,6 @@ async function loadTopics() {
   busy.value = true; errorKey.value = ''
   const version = ++generation
   try {
-    if (!await sameAccount()) return
     const result = await fetchTopics()
     if (active && generation === version) catalog.value = result
   } catch (error) { if (active && generation === version) handleError(error) }
@@ -122,7 +120,8 @@ onBeforeUnmount(() => { active = false; clearNuxtData(key); clearNuxtData(topicK
         <p v-if="!catalog.total_count" class="py-10 text-center text-sm text-chat-muted">{{ t('memoryLibrary.empty') }}</p>
       </section>
       <p v-if="removedNotice" role="status" class="mb-5 text-sm text-chat-muted">{{ t('memoryLibrary.unavailable') }}</p>
-      <p v-if="browsing && !items.length && !errorKey" class="py-10 text-center text-sm text-chat-muted">{{ cursor ? t('memoryLibrary.filtered') : t('memoryLibrary.empty') }}</p>
+      <p v-if="busy && browsing && !items.length" role="status" class="py-10 text-center text-sm text-chat-muted">{{ t('common.loading') }}</p>
+      <p v-if="browsing && !busy && !items.length && !errorKey" class="py-10 text-center text-sm text-chat-muted">{{ cursor ? t('memoryLibrary.filtered') : t('memoryLibrary.empty') }}</p>
       <ol v-if="browsing" class="space-y-4" :aria-busy="busy">
         <li v-for="item in items" :key="item.id" class="rounded-2xl border border-chat-line bg-white/60 p-4 md:p-6">
           <div class="mb-3 flex flex-wrap gap-2 text-xs text-chat-muted"><span class="rounded-md bg-[#e8ecdf] px-2 py-1">{{ t('memoryLibrary.candidate') }}</span><span class="px-1 py-1">{{ t(`memoryLibrary.evidence.${item.evidence_type}`) }}</span><span v-if="item.status" class="px-1 py-1">{{ t(`memoryLibrary.states.${item.status}`) }}</span></div>

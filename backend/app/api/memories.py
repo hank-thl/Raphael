@@ -3,6 +3,7 @@ import base64
 import binascii
 import json
 import re
+from itertools import islice
 from datetime import datetime
 from typing import Annotated
 
@@ -59,16 +60,15 @@ def topic_catalog(user=Depends(require_admin), reader=Depends(get_memory_reader)
         raise HTTPException(409, '帳號已變更，請重新開啟記憶頁面')
     counts, unclassified, total = {}, 0, 0
     try:
-        for row in reader.memories.recent(user.uid):
-            memory = reader.get_eligible(user.uid, row['_id'])
-            if memory is None or memory.get('lifecycle') != 'candidate':
-                continue
-            names = set(memory['versions'][-1]['content'].get('topics', []))
-            total += 1
-            if not names:
-                unclassified += 1
-            for name in names:
-                counts[name] = counts.get(name, 0) + 1
+        rows = iter(reader.memories.recent(user.uid))
+        while batch := list(islice(rows, 20)):
+            for memory in reader.get_eligible_many(user.uid, batch):
+                names = set(memory['versions'][-1]['content'].get('topics', []))
+                total += 1
+                if not names:
+                    unclassified += 1
+                for name in names:
+                    counts[name] = counts.get(name, 0) + 1
     except PyMongoError:
         raise HTTPException(503, '記憶服務暫時無法使用') from None
     return {'topics': [{'name': name, 'count': counts[name]} for name in sorted(counts)],
@@ -100,13 +100,11 @@ def list_memories(user=Depends(require_admin), reader=Depends(get_memory_reader)
     try:
         scanned = list(reader.memories.collection.find(query).sort([('updated_at', -1), ('_id', -1)]).limit(limit + 1))
         items = []
-        for row in scanned[:limit]:
-            eligible = reader.get_eligible(user.uid, row['_id'])
-            if eligible is not None and eligible.get('lifecycle') == 'candidate':
-                names = eligible['versions'][-1]['content'].get('topics', [])
-                if (topic is not None and topic not in names) or (unclassified and names):
-                    continue
-                items.append(summary(eligible))
+        for eligible in reader.get_eligible_many(user.uid, scanned[:limit]):
+            names = eligible['versions'][-1]['content'].get('topics', [])
+            if (topic is not None and topic not in names) or (unclassified and names):
+                continue
+            items.append(summary(eligible))
         # Cursor follows scanned rows, even when all their sources are invalid.
         return {'items': items, 'next_cursor': encode_boundary(scanned[limit - 1]) if len(scanned) > limit else None}
     except PyMongoError:

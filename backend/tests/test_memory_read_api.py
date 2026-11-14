@@ -42,6 +42,10 @@ def preview(record_context):
     reader.memories.collection.find.side_effect = lambda query: Cursor([deepcopy(row) for row in rows if match(row, query)])
     reader.memories.recent.side_effect = lambda uid: [deepcopy(row) for row in rows if row['user_uid'] == uid and row['lifecycle'] == 'candidate']
     reader.get_eligible.side_effect = lambda uid, identifier: deepcopy(next((row for row in rows if row['_id'] == identifier and row['user_uid'] == uid), None))
+    def eligible_many(uid, documents):
+        valid = [reader.get_eligible(uid, row['_id']) for row in documents]
+        return [row for row in valid if row is not None and row.get('lifecycle') == 'candidate']
+    reader.get_eligible_many.side_effect = eligible_many
     app.dependency_overrides[get_memory_reader] = lambda: reader
     login_as(client)
     return client, reader, rows

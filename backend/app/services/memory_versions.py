@@ -1,8 +1,10 @@
 """Version explicitly linked candidates; does not infer that two events are the same."""
 from datetime import datetime, timezone
+from bson import ObjectId
 
 from app.repositories.memories import VersionConflict
-from app.services.memory_capture import CaptureError, digest
+from app.services.memory_capture import CaptureError, digest, snapshots
+from app.schemas.extraction import ExtractionInput, SourceRecord
 
 
 class MemoryVersionsService:
@@ -75,3 +77,33 @@ class MemoryVersionsService:
         except CaptureError:
             return None
         return memory
+
+    def get_eligible_many(self, uid, memories):
+        """Request-scoped batch validation, with the same all-history source rules."""
+        if not uid:
+            return []
+        memories = [row for row in memories if row.get('user_uid') == uid and row.get('lifecycle') == 'candidate']
+        ids = {v['analysis_id'] for row in memories for v in row['versions']}
+        if not ids:
+            return []
+        analyses = {row['_id']: row for row in self.capture.analyses.collection.find(
+            {'user_uid': uid, '_id': {'$in': list(ids)}})}
+        record_ids = set()
+        for analysis in analyses.values():
+            for identifier in [analysis['target_record_id'], *analysis['context_record_ids']]:
+                if ObjectId.is_valid(identifier):
+                    record_ids.add(ObjectId(identifier))
+        records = {str(row['_id']): row for row in self.capture.records.find(
+            {'user_uid': uid, 'deleted_at': None, '_id': {'$in': list(record_ids)}})} if record_ids else {}
+        valid = {}
+        for identifier, analysis in analyses.items():
+            try:
+                rows = [records[key] for key in [analysis['target_record_id'], *analysis['context_record_ids']]]
+                sources = [SourceRecord(record_id=str(row['_id']), content=row['content'], created_at=row['created_at']) for row in rows]
+                data = ExtractionInput(target=sources[0], context=sources[1:], timezone=analysis['timezone'])
+                if snapshots(data) == analysis['source_snapshot']:
+                    valid[identifier] = {item['_id'] for item in analysis['memories'] if item['user_uid'] == uid}
+            except (KeyError, ValueError, TypeError):
+                continue
+        return [row for row in memories if row['versions'] and all(
+            version['candidate_id'] in valid.get(version['analysis_id'], set()) for version in row['versions'])]
