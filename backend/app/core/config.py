@@ -16,6 +16,7 @@ class Settings:
     mongodb_database: str = "raphael_dev"
     gemini_api_key: str = field(default="", repr=False)
     gemini_model: str = ""
+    ai_capture_enabled: bool = False
 
     @property
     def auth_ready(self) -> bool:
@@ -44,4 +45,5 @@ def get_settings() -> Settings:
         mongodb_database=os.getenv("MONGODB_DATABASE", "raphael_dev").strip(),
         gemini_api_key=os.getenv("GEMINI_API_KEY", "").strip(),
         gemini_model=os.getenv("GEMINI_MODEL", "").strip(),
+        ai_capture_enabled=os.getenv("AI_CAPTURE_ENABLED", "false").lower() == "true",
     )

@@ -10,6 +10,7 @@ def no_real_mongodb_in_tests(monkeypatch):
     # Tests must never bill Gemini, even when launched with backend/.env.
     monkeypatch.setenv("GEMINI_API_KEY", "")
     monkeypatch.setenv("GEMINI_MODEL", "")
+    monkeypatch.setenv("AI_CAPTURE_ENABLED", "false")
     get_settings.cache_clear()
     yield
     get_settings.cache_clear()

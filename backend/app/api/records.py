@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request, R
 from pymongo.errors import PyMongoError
 
 from app.core.security import CurrentUser, get_current_user, require_csrf
+from app.core.config import Settings, get_settings
 from app.db import get_database
 from app.repositories.records import RecordsRepository, decode_cursor
 from app.schemas.record import RecordCreate, RecordPage, RecordResponse
@@ -33,9 +34,11 @@ def create_record(
     body: RecordCreate,
     user: CurrentUser = Depends(get_current_user),
     repository: RecordsRepository = Depends(get_records_repository),
+    settings: Settings = Depends(get_settings),
 ) -> RecordResponse:
     with database_operation():
-        return repository.create(user.uid, body.content)
+        return repository.create(user.uid, body.content, analyze=bool(
+            settings.ai_capture_enabled and settings.admin_uid and user.uid == settings.admin_uid))
 
 
 @router.get("", response_model=RecordPage)

@@ -7,6 +7,7 @@ from pydantic import BaseModel
 from app.api.admin import router as admin_router
 from app.api.auth import router as auth_router
 from app.api.records import router as records_router
+from app.api.memory import router as memory_router
 from app.core.config import get_settings
 from app.db import DatabaseConnection
 
@@ -15,10 +16,18 @@ from app.db import DatabaseConnection
 async def lifespan(app: FastAPI):
     connection = DatabaseConnection(get_settings())
     app.state.database_connection = connection
+    worker = None
     try:
         connection.open()
+        settings = get_settings()
+        if settings.ai_capture_enabled and settings.admin_uid and connection.database is not None:
+            from app.services.memory_worker import MemoryWorker
+            worker = MemoryWorker(connection.database, settings)
+            worker.start()
         yield
     finally:
+        if worker is not None:
+            worker.stop()
         connection.close()
 
 
@@ -26,6 +35,7 @@ app = FastAPI(title="Raphael API", version="0.1.0", lifespan=lifespan)
 app.include_router(auth_router)
 app.include_router(admin_router)
 app.include_router(records_router)
+app.include_router(memory_router)
 
 
 @app.middleware("http")

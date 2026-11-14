@@ -49,9 +49,12 @@ class RecordsRepository:
     def __init__(self, collection: Any):
         self.collection = collection
 
-    def create(self, uid: str, content: str) -> RecordResponse:
+    def create(self, uid: str, content: str, *, analyze: bool = False) -> RecordResponse:
         document = {"_id": ObjectId(), "user_uid": uid, "content": content,
                     "created_at": utc_now(), "deleted_at": None}
+        if analyze:
+            from app.repositories.memory_jobs import pending_job
+            document['ai_processing'] = pending_job()
         self.collection.insert_one(document)
         return record_response(document)
 
