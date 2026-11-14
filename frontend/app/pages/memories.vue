@@ -1,41 +1,49 @@
 <script setup lang="ts">
-import type { MemoryDetail, MemoryPage, MemorySummary } from '~/types/memories'
+import type { MemoryDetail, MemoryPage, MemorySummary, MemoryTopicPage } from '~/types/memories'
 import { recordErrorStatus } from '~/utils/records'
 const { t, locale } = useI18n()
 definePageMeta({ middleware: 'auth' })
 useHead(() => ({ title: `${t('memoryLibrary.title')}｜Raphael` }))
 const auth = useAuth()
 const uid = auth.user.value?.uid
+const route = useRoute()
+const selectedTopic = computed(() => typeof route.query.topic === 'string' && route.query.topic.length > 0 ? route.query.topic : undefined)
+const unclassified = computed(() => !selectedTopic.value && route.query.unclassified === '1')
+const browsing = computed(() => selectedTopic.value !== undefined || unclassified.value)
 const requestFetch = useRequestFetch()
 const key = `memories:${uid}`
 const fetchPage = (cursor?: string) => requestFetch<MemoryPage>('/api/memories', {
-  query: { limit: 10, ...(cursor ? { cursor } : {}) }, headers: uid ? { 'X-Raphael-Account': uid } : undefined, retry: 0,
+  query: { limit: 10, ...(cursor ? { cursor } : {}), ...(selectedTopic.value ? { topic: selectedTopic.value } : {}), ...(unclassified.value ? { unclassified: 'true' } : {}) }, headers: uid ? { 'X-Raphael-Account': uid } : undefined, retry: 0,
 })
-const { data: initial, error: initialError } = await useAsyncData(key, () => fetchPage())
+const topicKey = `${key}:topics`
+const fetchTopics = () => requestFetch<MemoryTopicPage>('/api/memories/topics', { headers: uid ? { 'X-Raphael-Account': uid } : undefined, retry: 0 })
+const { data: catalog, error: catalogError } = await useAsyncData(topicKey, fetchTopics)
+const { data: initial, error: initialError } = await useAsyncData(key, () => browsing.value ? fetchPage() : Promise.resolve<MemoryPage>({ items: [], next_cursor: null }))
 const items = ref<MemorySummary[]>(initial.value?.items || [])
 const cursor = ref<string | null>(initial.value?.next_cursor || null)
 const details = ref<Record<string, MemoryDetail>>({})
 const loadingDetails = ref<Record<string, boolean>>({})
 const detailErrors = ref<Record<string, boolean>>({})
 const busy = ref(false)
-const errorKey = ref(initialError.value ? (recordErrorStatus(initialError.value) === 403 ? 'memoryLibrary.forbidden' : 'memoryLibrary.failed') : '')
+const firstError = browsing.value ? initialError.value : catalogError.value
+const errorKey = ref(firstError ? (recordErrorStatus(firstError) === 403 ? 'memoryLibrary.forbidden' : 'memoryLibrary.failed') : '')
 const removedNotice = ref(false)
 let active = true
 let generation = 0
 const dateLabel = (value: string) => new Intl.DateTimeFormat(locale.value, { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Taipei' }).format(new Date(value))
-function clear() { items.value = []; details.value = {}; cursor.value = null; clearNuxtData(key); generation++ }
+function clear() { items.value = []; details.value = {}; cursor.value = null; busy.value = false; clearNuxtData(key); generation++ }
 function handleError(error: unknown) {
-  if ([401, 403, 409].includes(recordErrorStatus(error) || 0)) clear()
+  if ([401, 403, 409].includes(recordErrorStatus(error) || 0)) { clear(); catalog.value = undefined; clearNuxtData(topicKey) }
   errorKey.value = recordErrorStatus(error) === 403 ? 'memoryLibrary.forbidden' : 'memoryLibrary.failed'
 }
 async function sameAccount() {
   const user = await auth.check()
   if (!active) return false
-  if (user.uid !== uid) { clear(); await navigateTo('/chat', { external: true }); return false }
+  if (user.uid !== uid) { clear(); catalog.value = undefined; clearNuxtData(topicKey); await navigateTo('/chat', { external: true }); return false }
   return true
 }
 async function load(more = false) {
-  if (busy.value) return
+  if (busy.value && more) return
   busy.value = true; errorKey.value = ''; removedNotice.value = false
   const requestGeneration = ++generation
   try {
@@ -47,9 +55,24 @@ async function load(more = false) {
     cursor.value = page.next_cursor
     if (!more) details.value = {}
     clearNuxtData(key)
-  } catch (error) { if (active) handleError(error) }
-  finally { if (active) busy.value = false }
+  } catch (error) { if (active && generation === requestGeneration) handleError(error) }
+  finally { if (active && generation === requestGeneration) busy.value = false }
 }
+async function loadTopics() {
+  busy.value = true; errorKey.value = ''
+  const version = ++generation
+  try {
+    if (!await sameAccount()) return
+    const result = await fetchTopics()
+    if (active && generation === version) catalog.value = result
+  } catch (error) { if (active && generation === version) handleError(error) }
+  finally { if (active && generation === version) busy.value = false }
+}
+watch([selectedTopic, unclassified], () => {
+  clear(); errorKey.value = ''; removedNotice.value = false
+  if (browsing.value) void load()
+  else void loadTopics()
+})
 async function showDetails(id: string) {
   if (busy.value || loadingDetails.value[id]) return
   if (details.value[id]) { delete details.value[id]; return }
@@ -71,7 +94,7 @@ async function onFocus() {
   try { await sameAccount() } catch (error) { if (active) handleError(error) }
 }
 onMounted(() => window.addEventListener('focus', onFocus))
-onBeforeUnmount(() => { active = false; clearNuxtData(key); window.removeEventListener('focus', onFocus) })
+onBeforeUnmount(() => { active = false; clearNuxtData(key); clearNuxtData(topicKey); window.removeEventListener('focus', onFocus) })
 </script>
 
 <template>
@@ -81,13 +104,26 @@ onBeforeUnmount(() => { active = false; clearNuxtData(key); window.removeEventLi
         <NuxtLink to="/chat" class="inline-flex min-h-11 items-center">← {{ t('common.backChat') }}</NuxtLink><LanguageSwitcher />
       </nav>
       <header class="mb-6 flex items-start justify-between gap-4">
-        <div><h1 class="text-xl font-semibold md:text-2xl">{{ t('memoryLibrary.title') }}</h1><p class="mt-3 text-sm leading-relaxed text-chat-muted">{{ t('memoryLibrary.description') }}</p></div>
-        <button type="button" class="min-h-11 shrink-0 rounded-xl bg-[#e8ecdf] px-4 text-sm text-chat-green disabled:opacity-50" :disabled="busy" @click="load()">{{ busy ? t('common.loading') : t('common.refresh') }}</button>
+        <div><h1 class="text-xl font-semibold md:text-2xl">{{ selectedTopic || (unclassified ? t('memoryLibrary.unclassified') : t('memoryLibrary.title')) }}</h1><p class="mt-3 text-sm leading-relaxed text-chat-muted">{{ t('memoryLibrary.description') }}</p></div>
+        <button type="button" class="min-h-11 shrink-0 rounded-xl bg-[#e8ecdf] px-4 text-sm text-chat-green disabled:opacity-50" :disabled="busy" @click="browsing ? load() : loadTopics()">{{ busy ? t('common.loading') : t('common.refresh') }}</button>
       </header>
       <p v-if="errorKey" role="alert" class="mb-5 text-sm text-chat-error">{{ t(errorKey) }}</p>
+      <NuxtLink v-if="browsing" to="/memories" class="mb-5 inline-flex min-h-11 items-center text-sm text-chat-green">← {{ t('memoryLibrary.backTopics') }}</NuxtLink>
+      <section v-if="!browsing && catalog && !errorKey" :aria-label="t('memoryLibrary.topics')">
+        <p class="mb-4 text-sm text-chat-muted">{{ t('memoryLibrary.chooseTopic') }}</p>
+        <div class="grid gap-3 sm:grid-cols-2">
+          <NuxtLink v-for="topic in catalog.topics" :key="topic.name" :to="{ path: '/memories', query: { topic: topic.name } }" class="flex min-h-24 items-center justify-between gap-4 rounded-2xl border border-chat-line bg-white/60 p-5 hover:bg-[#edf1e9]">
+            <span class="min-w-0 text-base font-medium wrap-anywhere">{{ topic.name }}</span><span class="shrink-0 text-xs text-chat-muted">{{ t('memoryLibrary.count', { count: topic.count }) }}</span>
+          </NuxtLink>
+          <NuxtLink v-if="catalog.unclassified_count" :to="{ path: '/memories', query: { unclassified: '1' } }" class="flex min-h-24 items-center justify-between gap-4 rounded-2xl border border-dashed border-chat-line p-5 hover:bg-[#edf1e9]">
+            <span class="text-base">{{ t('memoryLibrary.unclassified') }}</span><span class="text-xs text-chat-muted">{{ t('memoryLibrary.count', { count: catalog.unclassified_count }) }}</span>
+          </NuxtLink>
+        </div>
+        <p v-if="!catalog.total_count" class="py-10 text-center text-sm text-chat-muted">{{ t('memoryLibrary.empty') }}</p>
+      </section>
       <p v-if="removedNotice" role="status" class="mb-5 text-sm text-chat-muted">{{ t('memoryLibrary.unavailable') }}</p>
-      <p v-if="!items.length && !errorKey" class="py-10 text-center text-sm text-chat-muted">{{ cursor ? t('memoryLibrary.filtered') : t('memoryLibrary.empty') }}</p>
-      <ol class="space-y-4" :aria-busy="busy">
+      <p v-if="browsing && !items.length && !errorKey" class="py-10 text-center text-sm text-chat-muted">{{ cursor ? t('memoryLibrary.filtered') : t('memoryLibrary.empty') }}</p>
+      <ol v-if="browsing" class="space-y-4" :aria-busy="busy">
         <li v-for="item in items" :key="item.id" class="rounded-2xl border border-chat-line bg-white/60 p-4 md:p-6">
           <div class="mb-3 flex flex-wrap gap-2 text-xs text-chat-muted"><span class="rounded-md bg-[#e8ecdf] px-2 py-1">{{ t('memoryLibrary.candidate') }}</span><span class="px-1 py-1">{{ t(`memoryLibrary.evidence.${item.evidence_type}`) }}</span><span v-if="item.status" class="px-1 py-1">{{ t(`memoryLibrary.states.${item.status}`) }}</span></div>
           <p class="whitespace-pre-wrap text-sm leading-relaxed wrap-anywhere md:text-base">{{ item.text }}</p>
@@ -105,7 +141,7 @@ onBeforeUnmount(() => { active = false; clearNuxtData(key); window.removeEventLi
           </ol>
         </li>
       </ol>
-      <div v-if="cursor" class="mt-6 text-center"><button type="button" class="min-h-11 rounded-xl bg-[#e8ecdf] px-5 text-sm text-chat-green disabled:opacity-50" :disabled="busy" @click="load(true)">{{ busy ? t('common.loading') : t('memoryLibrary.more') }}</button></div>
+      <div v-if="browsing && cursor" class="mt-6 text-center"><button type="button" class="min-h-11 rounded-xl bg-[#e8ecdf] px-5 text-sm text-chat-green disabled:opacity-50" :disabled="busy" @click="load(true)">{{ busy ? t('common.loading') : t('memoryLibrary.more') }}</button></div>
     </div>
   </main>
 </template>

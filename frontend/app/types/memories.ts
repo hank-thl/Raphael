@@ -17,3 +17,8 @@ export interface MemoryDetail extends MemorySummary {
   } })[]
 }
 export interface MemoryPage { items: MemorySummary[]; next_cursor: string | null }
+export interface MemoryTopicPage {
+  topics: { name: string; count: number }[]
+  unclassified_count: number
+  total_count: number
+}

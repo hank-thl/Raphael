@@ -191,7 +191,7 @@
     "quotes": "Original quotes",
     "more": "Load more",
     "empty": "No memories to display yet. Analyzing new entries may produce memory candidates.",
-    "filtered": "No memories on this page have valid sources. You can continue loading.",
+    "filtered": "No valid matching memories on this page. You can continue loading.",
     "failed": "Unable to load memories. Check your sign-in and try again.",
     "forbidden": "Memories are currently available only to the owner test account.",
     "detailFailed": "Unable to load sources and versions. Click again to retry.",
@@ -207,6 +207,10 @@
       "occurred": "Occurred",
       "cancelled": "Cancelled"
     },
-    "topics": "Topics"
+    "topics": "Topics",
+    "chooseTopic": "Choose a topic to view related memories.",
+    "unclassified": "Unclassified",
+    "backTopics": "All topics",
+    "count": "Memories: {count}"
   }
 }

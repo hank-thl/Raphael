@@ -35,7 +35,12 @@ def preview(record_context):
     enable_owner()
     reader = Mock()
     rows = [document(i) for i in range(1, 5)]
-    reader.memories.collection.find.side_effect = lambda query: Cursor([deepcopy(row) for row in rows if matches(row, query)])
+    def match(row, query):
+        query = dict(query)
+        topic = query.pop('versions.content.topics', None)
+        return matches(row, query) and (topic is None or any(topic in v['content'].get('topics', []) for v in row['versions']))
+    reader.memories.collection.find.side_effect = lambda query: Cursor([deepcopy(row) for row in rows if match(row, query)])
+    reader.memories.recent.side_effect = lambda uid: [deepcopy(row) for row in rows if row['user_uid'] == uid and row['lifecycle'] == 'candidate']
     reader.get_eligible.side_effect = lambda uid, identifier: deepcopy(next((row for row in rows if row['_id'] == identifier and row['user_uid'] == uid), None))
     app.dependency_overrides[get_memory_reader] = lambda: reader
     login_as(client)
@@ -120,3 +125,62 @@ def test_topics_are_returned_in_summary_and_version_without_rewriting_raw_source
     detail = client.get('/memories/' + rows[0]['_id']).json()
     assert detail['topics'] == detail['versions'][0]['topics'] == ['工作', 'raphael']
     assert detail['versions'][0]['evidence']['sources'][0]['quote'] == '原文引用'
+
+
+def test_topic_counts_include_only_valid_latest_owner_memories(preview):
+    client, reader, rows = preview
+    rows[0]['versions'][0]['content']['topics'] = ['旅行', '京都']
+    rows[1]['versions'][0]['content']['topics'] = ['旅行']
+    rows[2]['versions'][0]['content']['topics'] = ['不應顯示']
+    existing = reader.get_eligible.side_effect
+    reader.get_eligible.side_effect = lambda uid, identifier: None if identifier == rows[2]['_id'] else existing(uid, identifier)
+    response = client.get('/memories/topics')
+    assert response.status_code == 200 and response.headers['cache-control'] == 'no-store'
+    data = response.json()
+    assert {row['name']: row['count'] for row in data['topics']} == {'旅行': 2, '京都': 1}
+    assert data['unclassified_count'] == 1 and data['total_count'] == 3
+    reader.memories.recent.assert_called_once_with('user-a')
+
+
+def test_topic_filter_uses_latest_version_and_unclassified_keeps_legacy(preview):
+    client, reader, rows = preview
+    rows[0]['versions'][0]['content']['topics'] = ['旅行', '京都']
+    rows[1]['versions'][0]['content']['topics'] = ['旅行']
+    # A historical match must not leak into a topic absent from latest content.
+    rows[2]['versions'][0]['content']['topics'] = ['旅行']
+    newer = deepcopy(rows[2]['versions'][0]); newer['content']['topics'] = ['工作']
+    rows[2]['versions'].append(newer)
+    data = client.get('/memories', params={'topic': '旅行'}).json()
+    assert {row['id'] for row in data['items']} == {rows[0]['_id'], rows[1]['_id']}
+    assert reader.memories.collection.find.call_args.args[0]['versions.content.topics'] == '旅行'
+    legacy = client.get('/memories', params={'unclassified': 'true'}).json()
+    assert [row['id'] for row in legacy['items']] == [rows[3]['_id']]
+    assert 'topics' not in rows[3]['versions'][0]['content']
+
+
+def test_topic_filter_cursor_does_not_repeat_multi_topic_memories(preview):
+    client, reader, rows = preview
+    for row in rows: row['versions'][0]['content']['topics'] = ['旅行', '京都']
+    first = client.get('/memories', params={'topic': '旅行', 'limit': 2}).json()
+    second = client.get('/memories', params={'topic': '旅行', 'limit': 2, 'cursor': first['next_cursor']}).json()
+    assert len({row['id'] for row in first['items'] + second['items']}) == 4
+    assert second['next_cursor'] is None
+
+
+def test_topic_catalog_checks_identity_and_does_not_leak_database_errors(preview):
+    client, reader, rows = preview
+    assert client.get('/memories/topics', headers={'X-Raphael-Account': 'other'}).status_code == 409
+    reader.memories.recent.side_effect = OperationFailure('private-password')
+    response = client.get('/memories/topics')
+    assert response.status_code == 503 and 'private-password' not in response.text
+    login_as(client, 'b')
+    assert client.get('/memories/topics').status_code == 403
+    client.cookies.clear()
+    assert client.get('/memories/topics').status_code == 401
+
+
+@pytest.mark.parametrize('query', [{'topic': '旅行', 'unclassified': 'true'}, {'topic': ''}, {'topic': ' '}, {'topic': 'x'*65}])
+def test_invalid_topic_filters_fail_without_query(preview, query):
+    client, reader, rows = preview
+    assert client.get('/memories', params=query).status_code == 422
+    reader.memories.collection.find.assert_not_called()
