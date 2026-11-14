@@ -168,5 +168,15 @@
       "d7": "請重新執行 Google 登入",
       "d8": "請先登入"
     }
+  },
+  "memory": {
+    "pending": "AI 排隊中",
+    "running": "AI 分析中",
+    "succeeded": "AI 已分析",
+    "failed": "AI 分析失敗，原文已保留",
+    "retry": "重試分析",
+    "retrying": "重試中…",
+    "unavailable": "暫時無法查詢 AI 狀態",
+    "refresh": "重新查詢"
   }
 }

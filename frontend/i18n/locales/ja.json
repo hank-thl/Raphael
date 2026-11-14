@@ -168,5 +168,15 @@
       "d7": "Google ログインをやり直してください",
       "d8": "まずログインしてください"
     }
+  },
+  "memory": {
+    "pending": "AI処理待ち",
+    "running": "AI分析中",
+    "succeeded": "AI分析済み",
+    "failed": "AI分析に失敗しました。原文は保存されています。",
+    "retry": "分析を再試行",
+    "retrying": "再試行中…",
+    "unavailable": "AIの状態を取得できません",
+    "refresh": "再確認"
   }
 }

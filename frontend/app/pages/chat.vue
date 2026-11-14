@@ -53,6 +53,17 @@ function handleError(error: unknown) {
     clearNuxtData(cacheKey)
   }
 }
+const memory = useMemoryProcessing(
+  () => messages.value.filter(item => item.status === 'success' && item.role === 'user').map(item => item.id),
+  () => !!admin.value?.is_admin && !sessionExpired.value,
+  handleError,
+)
+async function retryMemory(message: ChatMessage) {
+  if (busy.value || sessionExpired.value) return
+  try {
+    if (await sameAccount()) await memory.retry(message.id)
+  } catch (error) { handleError(error) }
+}
 async function sameAccount() {
   try {
     const user = await auth.check()
@@ -76,6 +87,12 @@ async function scrollToLatest(smooth = false) {
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
   bottom.value?.scrollIntoView({ block: 'end', behavior: smooth && !reducedMotion ? 'smooth' : 'instant' })
 }
+watch(() => JSON.stringify([memory.statuses.value, memory.unavailable.value]), () => {
+  const el = scroller.value
+  if (el && !loadingHistory.value && el.scrollHeight - el.scrollTop - el.clientHeight < 64) {
+    void scrollToLatest()
+  }
+})
 async function send() {
   if (busy.value || uncertain.value || recordValidation(draft.value)) return
   sending.value = true
@@ -121,6 +138,7 @@ async function loadHistory(latest = false) {
     if (!active) return
     // Refresh replaces loaded history so soft-deleted records disappear too.
     messages.value = latest ? page.messages : mergeChatMessages(messages.value, page.messages)
+    memory.refresh()
     nextCursor.value = page.nextCursor
     clearNuxtData(cacheKey)
     await nextTick()
@@ -249,7 +267,7 @@ onBeforeUnmount(() => {
           <ol class="flex list-none flex-col gap-3 pt-2.5 md:gap-[26px]" :aria-busy="loadingHistory">
             <template v-for="(message, index) in messages" :key="message.id">
               <li v-if="index === 0 || dayLabel(messages[index - 1]!.createdAt) !== dayLabel(message.createdAt)" class="mt-0.5 mb-1.5 flex items-center gap-4 text-[10px] text-[#969c91] before:h-px before:flex-1 before:bg-chat-line before:content-[''] after:h-px after:flex-1 after:bg-chat-line after:content-['']"><span>{{ dayLabel(message.createdAt) }}</span></li>
-              <ChatBubble :message="message" :disabled="busy || sessionExpired" @actions="openMessageActions" />
+              <ChatBubble :message="message" :disabled="busy || sessionExpired" :memory="memory.statuses.value[message.id]" :memory-unavailable="memory.unavailable.value[message.id]" :memory-retrying="memory.retrying.value[message.id]" @actions="openMessageActions" @retry-memory="retryMemory" @refresh-memory="memory.refresh" />
             </template>
             <ChatBubble v-if="pending" :message="pending" />
           </ol>

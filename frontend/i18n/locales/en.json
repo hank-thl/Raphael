@@ -168,5 +168,15 @@
       "d7": "Please sign in with Google again",
       "d8": "Please sign in first"
     }
+  },
+  "memory": {
+    "pending": "AI queued",
+    "running": "AI analyzing",
+    "succeeded": "AI analyzed",
+    "failed": "AI analysis failed. Your entry is saved.",
+    "retry": "Retry analysis",
+    "retrying": "Retrying…",
+    "unavailable": "AI status is temporarily unavailable",
+    "refresh": "Check again"
   }
 }

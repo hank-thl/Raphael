@@ -1,4 +1,5 @@
 import type { PersonalRecord, RecordPage } from '~/types/record'
+import type { MemoryJobStatus } from '~/types/memory'
 
 export function useRecords() {
   const requestFetch = useRequestFetch()
@@ -25,5 +26,13 @@ export function useRecords() {
     })
   }
 
-  return { list, create, softDelete }
+  function memoryStatus(id: string) {
+    return $fetch<MemoryJobStatus>(`/api/records/${encodeURIComponent(id)}/memory`, { retry: 0 })
+  }
+  async function retryMemory(id: string) {
+    return $fetch<MemoryJobStatus>(`/api/records/${encodeURIComponent(id)}/memory/retry`, {
+      method: 'POST', headers: await csrfHeaders(), retry: 0,
+    })
+  }
+  return { list, create, softDelete, memoryStatus, retryMemory }
 }

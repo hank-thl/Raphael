@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { createLongPress } from '~/utils/long-press'
 import type { ChatMessage } from '~/types/chat'
+import type { MemoryJobStatus } from '~/types/memory'
 const { t, locale } = useI18n()
-const props = defineProps<{ message: ChatMessage; disabled?: boolean }>()
-const emit = defineEmits<{ actions: [message: ChatMessage] }>()
+const props = defineProps<{ message: ChatMessage; disabled?: boolean; memory?: MemoryJobStatus; memoryUnavailable?: boolean; memoryRetrying?: boolean }>()
+const emit = defineEmits<{ actions: [message: ChatMessage]; retryMemory: [message: ChatMessage]; refreshMemory: [] }>()
 const moreButton = ref<HTMLButtonElement>()
 const actionable = computed(() => props.message.status === 'success' && props.message.role === 'user' && !props.disabled)
 function openActions() {
@@ -44,6 +45,12 @@ const time = computed(() => new Intl.DateTimeFormat(locale.value, { hour: '2-dig
       <span v-else-if="message.status === 'error'" class="text-chat-error">{{ message.uncertain ? t('bubble.uncertain') : t('bubble.unsaved') }}</span>
       <span v-else class="inline-flex items-center gap-[3px] [&_svg]:size-3"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m3 8 3 3 7-7" /></svg>{{ t('bubble.saved') }}</span>
       <button v-if="message.status === 'success' && message.role === 'user'" ref="moreButton" type="button" class="relative -my-[3px] -mr-1 inline-flex min-h-7 w-7 items-center justify-center rounded-md border-0 bg-transparent p-0 text-[18px] leading-none text-chat-muted shadow-none after:absolute after:-inset-2 after:content-[''] enabled:hover:text-chat-green" :disabled="disabled" :aria-label="t('bubble.actions')" aria-haspopup="dialog" @click="openActions">⋯</button>
+    </div>
+    <div v-if="message.status === 'success' && message.role === 'user' && (memory?.state !== 'not_requested') && (memory || memoryUnavailable)"
+      class="mt-1 flex max-w-[90%] flex-wrap items-center justify-end gap-x-2 pr-[3px] text-[10px] leading-relaxed text-chat-muted md:max-w-[78%]">
+      <span :class="(memoryUnavailable || memory?.state === 'failed') && 'text-chat-error'">{{ memoryUnavailable ? t('memory.unavailable') : t(`memory.${memory!.state}`) }}</span>
+      <button v-if="memoryUnavailable" type="button" class="min-h-8 rounded-md px-1 underline underline-offset-2" :disabled="disabled || memoryRetrying" @click="emit('refreshMemory')">{{ t('memory.refresh') }}</button>
+      <button v-else-if="memory?.state === 'failed'" type="button" class="min-h-8 rounded-md px-1 text-chat-green underline underline-offset-2" :disabled="disabled || memoryRetrying" @click="emit('retryMemory', message)">{{ memoryRetrying ? t('memory.retrying') : t('memory.retry') }}</button>
     </div>
   </li>
 </template>
