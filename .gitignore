@@ -28,3 +28,6 @@ htmlcov/
 
 # Vercel local build output
 .vercel/
+
+# 本人分析重建前的私人備份
+/data/private/
