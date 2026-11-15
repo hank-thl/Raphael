@@ -394,3 +394,16 @@ def test_inferred_historical_revision_cannot_be_promoted_by_explicit_latest_vers
     rows[0]['versions'].append(latest); rows[0]['revision'] = 2
     with pytest.raises(SummaryError, match='invalid_summary'): service.generate('user-a', '旅行')
     assert not store.rows
+
+
+def test_style_prompt_version_is_saved_without_changing_article_contract_or_auto_generation():
+    from app.services.topic_summary import PROMPT_VERSION, SUMMARY_VERSION
+    service, rows, invalid, model, store, reader = fixture()
+    result = service.generate('user-a', '旅行')
+    saved = next(iter(store.rows.values()))
+    assert saved['prompt_version'] == PROMPT_VERSION
+    assert saved['version'] == SUMMARY_VERSION == 'topic-summary-v2'
+    assert result['format'] == 'article'
+    saved.pop('prompt_version')  # Existing v2 article remains readable until manual update.
+    assert service.read('user-a', '旅行')['state'] == 'ready'
+    assert model.generate.call_count == 1
