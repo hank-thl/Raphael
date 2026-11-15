@@ -10,6 +10,16 @@ from app.core.config import get_settings
 from app.schemas.extraction import ExtractionInput, SourceRecord
 from app.services.gemini import CONTRACT_VERSION, PROMPT_VERSION, GeminiError, GeminiExtractor
 
+# Synthetic acceptance examples, never fetched from private records.
+TOPIC_CASES = {
+    'topics-travel': '一月想去長崎，但還不知道具體時間',
+    'topics-question': 'ACT講的價值跟阿德勒講的自我價值一樣嗎',
+    'topics-feeling': '我現在一個人突然覺得有點孤單但是又不想解決',
+    'topics-activity': '今天上陶藝課很開心',
+}
+TOPIC_CATALOG = ['專案', '旅行', '學習', '心情', '心理']
+
+
 SYNTHETIC_CATEGORY_OWNER = "__raphael_synthetic_categories_v1__"
 
 
@@ -35,6 +45,11 @@ def analyze_with_categories(settings, extractor, data):
 
 def example(case: str) -> ExtractionInput:
     stamp = datetime(2026, 11, 14, 4, 0, tzinfo=timezone.utc)
+    if case in TOPIC_CASES:
+        return ExtractionInput(
+            target=SourceRecord(record_id="sample_1", content=TOPIC_CASES[case], created_at=stamp),
+            timezone="Asia/Taipei", existing_topics=TOPIC_CATALOG,
+        )
     if case == "context":
         return ExtractionInput(
             target=SourceRecord(record_id="sample_2", content="茶飲70元，甜點110元。", created_at=stamp),
@@ -47,7 +62,7 @@ def example(case: str) -> ExtractionInput:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--case", choices=["multi", "context", "noise"], default="multi")
+    parser.add_argument("--case", choices=["multi", "context", "noise", *TOPIC_CASES], default="multi")
     parser.add_argument("--dry-run", action="store_true", help="Show synthetic input without calling Gemini")
     parser.add_argument("--with-categories", action="store_true", help="Read/write only synthetic-owner content types in MongoDB; never read records")
     parser.add_argument("--read-timeout", type=float, default=120, help="Response inactivity timeout in seconds (1-300, default 120)")
