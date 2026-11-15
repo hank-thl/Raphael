@@ -4,7 +4,7 @@ from itertools import islice
 from app.repositories.records import utc_now
 from app.schemas.memory_answer import MemoryAnswer
 from app.services.gemini import GeminiError
-from app.services.memory_answer import ANSWER_VERSION, AnswerError, MemoryAnswerService
+from app.services.memory_answer import ANSWER_PROMPT_VERSION, ANSWER_VERSION, AnswerError, MemoryAnswerService
 
 
 class ConversationService:
@@ -55,7 +55,7 @@ class ConversationService:
             generated = self.answerer.generate(uid, question, previous)
             finished = self.repository.finish(row, 'succeeded', answer=generated['answer'].model_dump(),
                 inputs=generated['inputs'], processing={'provider': 'gemini', 'model': self.answerer.extractor.model,
-                                                        'version': ANSWER_VERSION})
+                                                        'version': ANSWER_VERSION, 'prompt_version': ANSWER_PROMPT_VERSION})
         except (GeminiError, AnswerError) as exc:
             reason = str(exc) if isinstance(exc, AnswerError) else exc.reason
             safe = reason if reason in {'input_limit', 'sources_changed', 'rate_limited'} else 'generation_failed'

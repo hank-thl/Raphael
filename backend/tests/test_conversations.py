@@ -259,3 +259,16 @@ def test_single_status_query_scoped_to_session_uid_and_has_no_model_call(api):
     assert client.get(f'/conversations/{rid}').status_code == 200
     service.repository.get.assert_called_once_with('user-a', rid)
     service.ask.assert_not_called()
+
+
+def test_answer_prompt_version_is_saved_without_regenerating_old_history(conversation_setup):
+    from app.services.memory_answer import ANSWER_PROMPT_VERSION, ANSWER_VERSION
+    service, collection, answerer = conversation_setup
+    rid = str(uuid4())
+    service.ask('alice', rid, 'question')
+    assert collection.rows[0]['processing']['version'] == ANSWER_VERSION
+    assert collection.rows[0]['processing']['prompt_version'] == ANSWER_PROMPT_VERSION
+    # Old rows remain readable; a prompt revision does not rewrite dialogue history.
+    collection.rows[0]['processing'].pop('prompt_version')
+    result = service.ask('alice', rid, 'question')
+    assert result['state'] == 'succeeded' and answerer.generate.call_count == 1

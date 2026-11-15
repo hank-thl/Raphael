@@ -126,3 +126,21 @@ def test_many_invalid_sources_also_have_a_scan_bound(setup):
     with pytest.raises(AnswerError, match='input_limit'):
         service.answer('owner', 'question')
     model.generate.assert_not_called()
+
+
+def test_analysis_can_draw_tentative_inference_from_explicit_memories_without_changing_them(setup):
+    service, _, model, memory = setup
+    before = deepcopy(memory)
+    source = {'memory_id': memory['_id'], 'revision': 1}
+    model.generate.return_value = {'passages': [
+        {'text': '你記錄了上陶藝課時感到開心。', 'basis': 'explicit', 'sources': [source]},
+        {'text': '從這一則看，這次活動可能帶來正向感受，但不代表每次上課都如此。',
+         'basis': 'inferred', 'sources': [source]},
+        {'text': '缺少其他時間點的情緒強度與持續時間，還無法比較起伏幅度。',
+         'basis': 'limitation', 'sources': []},
+    ], 'insufficient_information': True}
+    answer = service.answer('owner', '分析一下最近的心情')
+    assert [part.basis for part in answer.passages] == ['explicit', 'inferred', 'limitation']
+    assert answer.insufficient_information is True
+    assert memory == before
+    assert answer.passages[1].sources[0].memory_id == memory['_id']
