@@ -9,6 +9,7 @@ from app.api.auth import router as auth_router
 from app.api.records import router as records_router
 from app.api.memory import router as memory_router
 from app.api.memories import router as memories_router
+from app.api.topic_summary import router as topic_summary_router
 from app.core.config import get_settings
 from app.db import DatabaseConnection
 
@@ -38,12 +39,13 @@ app.include_router(admin_router)
 app.include_router(records_router)
 app.include_router(memory_router)
 app.include_router(memories_router)
+app.include_router(topic_summary_router)
 
 
 @app.middleware("http")
 async def private_responses_no_store(request, call_next):
     response = await call_next(request)
-    if request.url.path.startswith("/admin/") or request.url.path.startswith("/auth/") or request.url.path == "/records" or request.url.path.startswith("/records/") or request.url.path == "/memories" or request.url.path.startswith("/memories/"):
+    if request.url.path.startswith("/admin/") or request.url.path.startswith("/auth/") or request.url.path == "/records" or request.url.path.startswith("/records/") or request.url.path == "/memories" or request.url.path.startswith("/memories/") or request.url.path == '/topic-summary':
         response.headers["Cache-Control"] = "no-store"
     return response
 

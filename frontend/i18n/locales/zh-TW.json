@@ -212,5 +212,25 @@
     "unclassified": "尚未分類",
     "backTopics": "所有主題",
     "count": "{count} 筆記憶"
+  },
+  "topicSummary": {
+    "title": "AI 主題統整",
+    "description": "將相關記憶整合成有脈絡的內容，點選依據可查看原文。",
+    "missing": "尚未生成統整。",
+    "generate": "生成統整",
+    "update": "更新統整",
+    "generating": "正在統整…",
+    "check": "重新查詢",
+    "stale": "記憶已有變更，這是先前的統整，請更新後再使用。",
+    "invalid": "統整依據的來源已失效，舊內容已隱藏。",
+    "failed": "暫時無法完成或確認統整，請先重新查詢再重試。",
+    "changed": "有效記憶已變更或不存在，請重新整理後再生成。",
+    "limit": "此主題超過目前可一次統整的範圍，未截斷記憶或生成部分摘要。",
+    "generated": "生成於 {time}，依據 {count} 筆記憶",
+    "source": "來源 {number}・第 {revision} 版",
+    "references": "依據 {count}",
+    "openSource": "查看原文 {number}",
+    "inferenceNote": "這段內容包含尚未確認的推測。",
+    "legacy": "這是舊版條列統整。按「更新統整」可生成文章式整理，原始記憶不會改動。"
   }
 }

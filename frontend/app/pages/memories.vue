@@ -25,6 +25,7 @@ const details = ref<Record<string, MemoryDetail>>({})
 const loadingDetails = ref<Record<string, boolean>>({})
 const detailErrors = ref<Record<string, boolean>>({})
 const busy = ref(false)
+const summaryRefreshKey = ref(0)
 const firstError = browsing.value ? initialError.value : catalogError.value
 const errorKey = ref(firstError ? (recordErrorStatus(firstError) === 403 ? 'memoryLibrary.forbidden' : 'memoryLibrary.failed') : '')
 const removedNotice = ref(false)
@@ -66,6 +67,11 @@ async function loadTopics() {
   } catch (error) { if (active && generation === version) handleError(error) }
   finally { if (active && generation === version) busy.value = false }
 }
+function refreshCurrent() {
+  summaryRefreshKey.value++
+  if (browsing.value) void load()
+  else void loadTopics()
+}
 watch([selectedTopic, unclassified], () => {
   clear(); errorKey.value = ''; removedNotice.value = false
   if (browsing.value) void load()
@@ -103,10 +109,11 @@ onBeforeUnmount(() => { active = false; clearNuxtData(key); clearNuxtData(topicK
       </nav>
       <header class="mb-6 flex items-start justify-between gap-4">
         <div><h1 class="text-xl font-semibold md:text-2xl">{{ selectedTopic || (unclassified ? t('memoryLibrary.unclassified') : t('memoryLibrary.title')) }}</h1><p class="mt-3 text-sm leading-relaxed text-chat-muted">{{ t('memoryLibrary.description') }}</p></div>
-        <button type="button" class="min-h-11 shrink-0 rounded-xl bg-[#e8ecdf] px-4 text-sm text-chat-green disabled:opacity-50" :disabled="busy" @click="browsing ? load() : loadTopics()">{{ busy ? t('common.loading') : t('common.refresh') }}</button>
+        <button type="button" class="min-h-11 shrink-0 rounded-xl bg-[#e8ecdf] px-4 text-sm text-chat-green disabled:opacity-50" :disabled="busy" @click="refreshCurrent">{{ busy ? t('common.loading') : t('common.refresh') }}</button>
       </header>
       <p v-if="errorKey" role="alert" class="mb-5 text-sm text-chat-error">{{ t(errorKey) }}</p>
       <NuxtLink v-if="browsing" to="/memories" class="mb-5 inline-flex min-h-11 items-center text-sm text-chat-green">← {{ t('memoryLibrary.backTopics') }}</NuxtLink>
+      <TopicSummaryPanel v-if="selectedTopic && !errorKey" :topic="selectedTopic" :expected-uid="uid" :refresh-key="summaryRefreshKey" @unauthorized="handleError" />
       <section v-if="!browsing && catalog && !errorKey" :aria-label="t('memoryLibrary.topics')">
         <p class="mb-4 text-sm text-chat-muted">{{ t('memoryLibrary.chooseTopic') }}</p>
         <div class="grid gap-3 sm:grid-cols-2">

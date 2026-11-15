@@ -83,9 +83,11 @@ def generation_schema(model=ExtractionResult) -> dict:
     The full nested Pydantic schema causes INVALID_ARGUMENT on the configured
     Gemini model. Length/cardinality bounds remain in ExtractionResult validation.
     """
-    def simplify(value):
+    def simplify(value, field_map=False):
         if isinstance(value, dict):
-            return {key: simplify(item) for key, item in value.items()
+            if field_map:
+                return {key: simplify(item) for key, item in value.items()}
+            return {key: simplify(item, key in {'properties', '$defs'}) for key, item in value.items()
                     if key not in {"title", "minLength", "maxLength", "minItems", "maxItems"}}
         if isinstance(value, list):
             return [simplify(item) for item in value]

@@ -212,5 +212,25 @@
     "unclassified": "Unclassified",
     "backTopics": "All topics",
     "count": "Memories: {count}"
+  },
+  "topicSummary": {
+    "title": "AI topic summary",
+    "description": "A coherent synthesis of related memories. Open references to check the original text.",
+    "missing": "No summary yet.",
+    "generate": "Generate summary",
+    "update": "Update summary",
+    "generating": "Summarizing…",
+    "check": "Check again",
+    "stale": "Memories have changed. This is an earlier summary; update it before use.",
+    "invalid": "Some source material is no longer valid. The old summary is hidden.",
+    "failed": "Unable to complete or confirm the summary. Check again before retrying.",
+    "changed": "Valid memories have changed or are unavailable. Refresh before generating.",
+    "limit": "This topic exceeds the current single-summary limit. No memories were silently omitted.",
+    "generated": "Generated {time}, using {count} memories",
+    "source": "Source {number} · version {revision}",
+    "references": "References {count}",
+    "openSource": "View original {number}",
+    "inferenceNote": "This passage includes an unconfirmed inference.",
+    "legacy": "This is an older list-style summary. Update it to generate an article without changing your original memories."
   }
 }
