@@ -143,7 +143,7 @@ onBeforeUnmount(() => { active = false; generation++; sender.dispose(); if (poll
               <p v-else-if="turn.state === 'invalid'" class="text-sm leading-relaxed text-chat-muted">{{ t('conversation.invalid') }}</p>
               <p v-else-if="turn.state === 'failed'" class="text-sm leading-relaxed text-chat-error">{{ t(turn.error === 'input_limit' ? 'conversation.limit' : 'conversation.answerFailed') }}</p>
               <div v-else-if="turn.answer" class="space-y-3">
-                <SynthesisPassage v-for="(passage, index) in turn.answer.passages" :key="index" :passage="passage" :sources="sources" :source-busy="sourceBusy" :disabled="busy" @source="source($event, turn)" />
+                <SynthesisPassage v-for="(passage, index) in turn.answer.passages" :key="index" :passage="passage" citation-style="icon" :sources="sources" :source-busy="sourceBusy" :disabled="busy" @source="source($event, turn)" />
               </div>
             </div>
           </li>

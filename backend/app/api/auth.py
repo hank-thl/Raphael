@@ -76,3 +76,12 @@ def logout(response: Response, settings: Settings = Depends(get_settings)) -> No
                            secure=settings.cookie_secure, samesite="lax")
     response.delete_cookie(CSRF_COOKIE, path="/", httponly=True,
                            secure=settings.cookie_secure, samesite="lax")
+
+
+@router.get("/capabilities")
+def capabilities(user: CurrentUser = Depends(get_current_user),
+                 settings: Settings = Depends(get_settings)) -> dict[str, bool]:
+    from app.core.ai_access import ai_user_allowed
+    enabled = ai_user_allowed(user.uid, settings)
+    return {"is_admin": bool(settings.admin_uid and user.uid == settings.admin_uid),
+            "ai_enabled": enabled, "capture_enabled": enabled and settings.ai_capture_enabled}

@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
 from pydantic import Field
 from pymongo.errors import PyMongoError
-from app.api.admin import require_admin
+from app.core.ai_access import require_ai_user
 from app.api.memories import get_memory_reader
 from app.core.config import get_settings
 from app.core.security import require_csrf
@@ -34,7 +34,7 @@ def normalized_topic(topic, uid, expected_uid):
 
 
 @router.get('')
-def read_summary(topic: Annotated[str, Query(min_length=1, max_length=64)], user=Depends(require_admin),
+def read_summary(topic: Annotated[str, Query(min_length=1, max_length=64)], user=Depends(require_ai_user),
     service=Depends(get_summary_service), expected_uid: Annotated[str | None, Header(alias='X-Raphael-Account', max_length=128)] = None):
     topic = normalized_topic(topic, user.uid, expected_uid)
     try: return service.read(user.uid, topic)
@@ -42,7 +42,7 @@ def read_summary(topic: Annotated[str, Query(min_length=1, max_length=64)], user
 
 
 @router.post('', dependencies=[Depends(require_csrf)])
-def generate_summary(body: GenerateSummary, user=Depends(require_admin), service=Depends(get_summary_service),
+def generate_summary(body: GenerateSummary, user=Depends(require_ai_user), service=Depends(get_summary_service),
     expected_uid: Annotated[str | None, Header(alias='X-Raphael-Account', max_length=128)] = None):
     topic = normalized_topic(body.topic, user.uid, expected_uid)
     try: return service.generate(user.uid, topic)

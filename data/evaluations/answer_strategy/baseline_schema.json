@@ -1,0 +1,68 @@
+{
+  "$defs": {
+    "AnswerPassage": {
+      "additionalProperties": false,
+      "properties": {
+        "text": {
+          "type": "string"
+        },
+        "basis": {
+          "enum": [
+            "explicit",
+            "contextual",
+            "inferred",
+            "limitation"
+          ],
+          "type": "string"
+        },
+        "sources": {
+          "items": {
+            "$ref": "#/$defs/SummarySource"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "text",
+        "basis",
+        "sources"
+      ],
+      "type": "object"
+    },
+    "SummarySource": {
+      "additionalProperties": false,
+      "properties": {
+        "memory_id": {
+          "pattern": "^[a-f0-9]{64}$",
+          "type": "string"
+        },
+        "revision": {
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "memory_id",
+        "revision"
+      ],
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "passages": {
+      "items": {
+        "$ref": "#/$defs/AnswerPassage"
+      },
+      "type": "array"
+    },
+    "insufficient_information": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "passages",
+    "insufficient_information"
+  ],
+  "type": "object"
+}

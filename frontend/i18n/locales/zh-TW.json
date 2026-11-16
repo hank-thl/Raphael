@@ -231,7 +231,9 @@
     "references": "依據 {count}",
     "openSource": "查看原文 {number}",
     "inferenceNote": "這段內容包含尚未確認的推測。",
-    "legacy": "這是舊版條列統整。按「更新統整」可生成文章式整理，原始記憶不會改動。"
+    "legacy": "這是舊版條列統整。按「更新統整」可生成文章式整理，原始記憶不會改動。",
+    "sourcesLabel": "查看本段的 {count} 個來源",
+    "interpretationNote": "這段包含 AI 根據記憶提出的解讀。"
   },
   "aiTest": {
     "nav": "AI 測試",
@@ -245,7 +247,7 @@
     "run": "執行擷取測試",
     "wait": "分析可能需要一至兩分鐘，請勿重複送出。",
     "busyError": "目前有其他測試執行中，或 API 用量受限。請稍後再試。",
-    "accessError": "登入或管理員權限已變更，請重新登入後再試。",
+    "accessError": "登入或 AI 使用權限已變更，請重新登入後再試。",
     "failed": "測試未取得有效結果。請稍後手動再試；這次請求仍可能產生 API 用量。",
     "result": "分析結果",
     "contentType": "訊息形式",

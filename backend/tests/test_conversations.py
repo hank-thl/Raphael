@@ -272,3 +272,24 @@ def test_answer_prompt_version_is_saved_without_regenerating_old_history(convers
     collection.rows[0]['processing'].pop('prompt_version')
     result = service.ask('alice', rid, 'question')
     assert result['state'] == 'succeeded' and answerer.generate.call_count == 1
+
+
+def test_v2_general_answer_is_persisted_and_readable_without_memories(conversation_setup):
+    service, _, answerer = conversation_setup
+    answerer.generate.return_value = {'answer': MemoryAnswer(passages=[{
+        'text': '一般知識解釋。', 'basis': 'general', 'sources': []}], insufficient_information=False), 'inputs': []}
+    rid = str(uuid4())
+    result = service.ask('alice', rid, '什麼是習慣？')
+    assert result['answer']['passages'][0]['basis'] == 'general'
+    assert result['answer']['insufficient_information'] is False
+    assert service.ask('alice', rid, '什麼是習慣？') == result
+    assert answerer.generate.call_count == 1
+
+
+def test_legacy_v1_history_is_still_readable(conversation_setup):
+    service, collection, answerer = conversation_setup
+    rid = str(uuid4())
+    service.ask('alice', rid, 'question')
+    collection.rows[0]['processing'] = {'version': 'memory-answer-v1', 'prompt_version': 'memory-answer-analysis-v1.3'}
+    assert service.ask('alice', rid, 'question')['state'] == 'succeeded'
+    assert answerer.generate.call_count == 1

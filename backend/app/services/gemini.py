@@ -3,6 +3,7 @@
 import json
 import math
 import re
+from typing import Callable
 
 import httpx
 from app.schemas.extraction import ExtractionInput, ExtractionResult
@@ -142,7 +143,8 @@ class GeminiExtractor:
         except (ValueError, TypeError):
             raise GeminiError("invalid_response") from None
 
-    def generate(self, input_json: str, schema: dict, instruction: str):
+    def generate(self, input_json: str, schema: dict, instruction: str, *,
+                 usage_callback: Callable[[dict[str, int]], None] | None = None):
         if not self._api_key or not re.fullmatch(r"gemini-[A-Za-z0-9.-]+", self.model):
             raise GeminiError("not_configured")
         payload = {
@@ -186,6 +188,18 @@ class GeminiExtractor:
             raise GeminiError("network_error") from None
         try:
             body = json.loads(raw, object_pairs_hook=_unique_object, parse_constant=_reject_constant)
+            if usage_callback is not None:
+                metadata = body.get('usageMetadata', {}) if isinstance(body, dict) else {}
+                keys = ('promptTokenCount', 'candidatesTokenCount', 'thoughtsTokenCount',
+                        'cachedContentTokenCount', 'totalTokenCount')
+                usage = {key: metadata[key] for key in keys
+                         if isinstance(metadata, dict) and type(metadata.get(key)) is int
+                         and 0 <= metadata[key] <= 10**9}
+                # Optional numeric-only instrumentation must not change generation behavior.
+                try:
+                    usage_callback(usage)
+                except Exception:
+                    pass
             if body.get("promptFeedback", {}).get("blockReason"):
                 raise GeminiError("blocked")
             candidates = body.get("candidates", [])

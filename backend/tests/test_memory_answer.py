@@ -144,3 +144,44 @@ def test_analysis_can_draw_tentative_inference_from_explicit_memories_without_ch
     assert answer.insufficient_information is True
     assert memory == before
     assert answer.passages[1].sources[0].memory_id == memory['_id']
+
+
+def test_general_knowledge_without_personal_memories_is_answerable(setup):
+    service, reader, model, _ = setup
+    reader.memories.recent.side_effect = lambda uid: iter([])
+    model.generate.return_value = {'passages': [{'text': '這是一般知識的解釋。', 'basis': 'general', 'sources': []}],
+                                   'insufficient_information': False}
+    assert service.answer('owner', '什麼是習慣？').passages[0].basis == 'general'
+    assert model.generate.call_count == 1
+
+
+def test_general_knowledge_cannot_claim_memory_citations(setup):
+    service, _, model, _ = setup
+    model.generate.return_value['passages'][0]['basis'] = 'general'
+    with pytest.raises(AnswerError, match='invalid_answer'):
+        service.answer('owner', '什麼是習慣？')
+
+
+def test_general_paragraph_does_not_exempt_personal_claim_from_citations(setup):
+    service, _, model, _ = setup
+    model.generate.return_value['passages'].insert(0, {'text': '一般知識。', 'basis': 'general', 'sources': []})
+    model.generate.return_value['passages'][1]['sources'] = []
+    with pytest.raises(AnswerError, match='invalid_answer'):
+        service.answer('owner', '這與我的紀錄有何關係？')
+
+
+def test_mixed_general_and_personal_answer_keeps_distinct_evidence(setup):
+    service, _, model, memory = setup
+    model.generate.return_value['passages'].insert(0, {'text': '一般知識。', 'basis': 'general', 'sources': []})
+    answer = service.answer('owner', '這與我的紀錄有何關係？')
+    assert answer.passages[0].sources == []
+    assert answer.passages[1].sources[0].memory_id == memory['_id']
+
+
+def test_uncited_personal_lack_of_information_still_requires_flag(setup):
+    service, reader, model, _ = setup
+    reader.memories.recent.side_effect = lambda uid: iter([])
+    model.generate.return_value = {'passages': [{'text': '缺少這件事的紀錄。', 'basis': 'limitation', 'sources': []}],
+                                   'insufficient_information': False}
+    with pytest.raises(AnswerError, match='invalid_answer'):
+        service.answer('owner', '我上星期見了誰？')

@@ -24,7 +24,7 @@ async def lifespan(app: FastAPI):
     try:
         connection.open()
         settings = get_settings()
-        if settings.ai_capture_enabled and settings.admin_uid and connection.database is not None:
+        if settings.ai_capture_enabled and settings.ai_user_uids and connection.database is not None:
             from app.services.memory_worker import MemoryWorker
             worker = MemoryWorker(connection.database, settings)
             worker.start()

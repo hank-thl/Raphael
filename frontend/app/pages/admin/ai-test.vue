@@ -6,9 +6,12 @@ import { createAiPreview } from '~/utils/ai-preview'
 definePageMeta({ middleware: 'auth' })
 const { t } = useI18n()
 const requestFetch = useRequestFetch()
-await requestFetch('/api/admin/me').catch((error: { statusCode?: number }) => {
+const capabilities = await requestFetch<{ ai_enabled: boolean }>('/api/auth/capabilities').catch((error: { statusCode?: number }) => {
   throw createError({ statusCode: error.statusCode || 503, statusMessage: 'Service Unavailable', message: t('admin.unavailable') })
 })
+if (!capabilities.ai_enabled) {
+  throw createError({ statusCode: 403, message: t('aiTest.accessError') })
+}
 const { user } = useAuth()
 const content = ref('')
 const busy = ref(false)

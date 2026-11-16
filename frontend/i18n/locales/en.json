@@ -231,7 +231,9 @@
     "references": "References {count}",
     "openSource": "View original {number}",
     "inferenceNote": "This passage includes an unconfirmed inference.",
-    "legacy": "This is an older list-style summary. Update it to generate an article without changing your original memories."
+    "legacy": "This is an older list-style summary. Update it to generate an article without changing your original memories.",
+    "sourcesLabel": "View {count} sources for this passage",
+    "interpretationNote": "This passage includes an AI interpretation of the memories."
   },
   "aiTest": {
     "nav": "AI testing",
@@ -245,7 +247,7 @@
     "run": "Test extraction",
     "wait": "Analysis may take one to two minutes. Please do not submit again.",
     "busyError": "Another test is running or API usage is limited. Please try later.",
-    "accessError": "Your session or administrator access changed. Please sign in again.",
+    "accessError": "Your session or AI access changed. Please sign in again.",
     "failed": "No valid result was received. Try again manually later; this request may still use API quota.",
     "result": "Analysis result",
     "contentType": "Message form",

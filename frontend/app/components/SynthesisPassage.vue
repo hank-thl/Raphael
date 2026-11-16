@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { SynthesisPassage, SummarySource } from '~/types/topic-summary'
 import type { MemoryDetail } from '~/types/memories'
-const props = defineProps<{ passage: Pick<SynthesisPassage, 'text' | 'sources'> & { basis: string }; sources: Record<string, MemoryDetail['versions'][number]>; sourceBusy: Record<string, boolean>; disabled: boolean }>()
+const props = defineProps<{ passage: Pick<SynthesisPassage, 'text' | 'sources'> & { basis: string }; sources: Record<string, MemoryDetail['versions'][number]>; sourceBusy: Record<string, boolean>; disabled: boolean; citationStyle?: 'text' | 'icon' }>()
 const emit = defineEmits<{ source: [reference: SummarySource] }>()
 const { t } = useI18n()
 const expanded = ref(false)
@@ -10,9 +10,16 @@ const keyOf = (source: SummarySource) => `${source.memory_id}:${source.revision}
 
 <template>
   <div class="min-w-0">
-    <p class="whitespace-pre-wrap text-[14px] leading-[1.9] wrap-anywhere md:text-[15px]">{{ passage.text }} <button v-if="passage.sources.length" type="button" class="inline-flex min-h-8 items-center rounded-md px-1 text-xs text-chat-green underline decoration-chat-green/30 underline-offset-4" :aria-expanded="expanded" @click="expanded = !expanded">{{ t('topicSummary.references', { count: passage.sources.length }) }}</button></p>
+    <p class="whitespace-pre-wrap text-[14px] leading-[1.9] wrap-anywhere md:text-[15px]">{{ passage.text }} <button v-if="passage.sources.length" type="button" class="after:content-['']"
+      :class="citationStyle === 'icon' ? 'relative ml-1 inline-flex size-5 items-center justify-center align-text-bottom rounded text-chat-muted hover:text-chat-green after:absolute after:-inset-3 focus-visible:outline-2 focus-visible:outline-chat-focus' : 'inline-flex min-h-8 items-center rounded-md px-1 text-xs text-chat-green underline decoration-chat-green/30 underline-offset-4'"
+      :aria-label="t('topicSummary.sourcesLabel', { count: passage.sources.length })"
+      :title="t('topicSummary.sourcesLabel', { count: passage.sources.length })"
+      :aria-expanded="expanded" :disabled="disabled" @click="expanded = !expanded">
+      <svg v-if="citationStyle === 'icon'" class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M8 3h9a2 2 0 0 1 2 2v13M5 6h9a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z" stroke-linejoin="round" /><path d="M7 11h5M7 15h5" stroke-linecap="round" /></svg>
+      <template v-else>{{ t('topicSummary.references', { count: passage.sources.length }) }}</template>
+    </button></p>
     <div v-if="expanded" class="mt-2 rounded-xl border border-chat-line bg-white/60 px-3 py-2 text-xs text-chat-muted">
-      <p v-if="passage.basis === 'inferred'" class="mb-1 leading-relaxed">{{ t('topicSummary.inferenceNote') }}</p>
+      <p v-if="passage.basis === 'inferred'" class="mb-1 leading-relaxed">{{ t(citationStyle === 'icon' ? 'topicSummary.interpretationNote' : 'topicSummary.inferenceNote') }}</p>
       <div v-for="(source, number) in passage.sources" :key="keyOf(source)" class="py-1">
         <button type="button" class="min-h-10 rounded-md px-1 text-chat-green underline underline-offset-4 disabled:opacity-50" :disabled="disabled || sourceBusy[keyOf(source)]" :aria-expanded="!!sources[keyOf(source)]" @click="emit('source', source)">{{ sourceBusy[keyOf(source)] ? t('common.loading') : t('topicSummary.openSource', { number: number + 1 }) }}</button>
         <blockquote v-if="sources[keyOf(source)]" class="mb-2 space-y-2 border-l-2 border-[#b9cba9] pl-3 leading-relaxed">

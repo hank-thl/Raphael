@@ -9,7 +9,7 @@ from app.schemas.topic_summary import SummarySource
 
 class AnswerPassage(StrictModel):
     text: str = Field(min_length=1, max_length=2500)
-    basis: Literal['explicit', 'contextual', 'inferred', 'limitation']
+    basis: Literal['explicit', 'contextual', 'inferred', 'limitation', 'general']
     sources: list[SummarySource] = Field(max_length=20)
 
     @field_validator('text')
@@ -31,9 +31,12 @@ class MemoryAnswer(StrictModel):
             refs = [(source.memory_id, source.revision) for source in passage.sources]
             if len(set(refs)) != len(refs) or any(ref not in allowed for ref in refs):
                 raise ValueError('Invalid answer sources')
-            if passage.basis != 'limitation' and not refs:
+            if passage.basis == 'general' and refs:
+                raise ValueError('General knowledge cannot use memory citations')
+            if passage.basis not in {'limitation', 'general'} and not refs:
                 raise ValueError('Memory claims require citations')
             if any(allowed[ref]['content']['evidence']['type'] == 'inferred' for ref in refs) and passage.basis not in {'inferred', 'limitation'}:
                 raise ValueError('Inferred evidence cannot become facts')
-        if not memories and not self.insufficient_information:
+        if not memories and not self.insufficient_information and not all(
+                passage.basis == 'general' for passage in self.passages):
             raise ValueError('Empty memory cannot support a personal answer')

@@ -10,7 +10,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
 from pymongo.errors import PyMongoError
 
-from app.api.admin import require_admin
+from app.core.ai_access import require_ai_user
 from app.db import get_database
 from app.repositories.analyses import AnalysesRepository
 from app.repositories.memories import MemoriesRepository
@@ -54,7 +54,7 @@ def summary(row):
 
 
 @router.get('/topics')
-def topic_catalog(user=Depends(require_admin), reader=Depends(get_memory_reader),
+def topic_catalog(user=Depends(require_ai_user), reader=Depends(get_memory_reader),
                   expected_uid: Annotated[str | None, Header(alias='X-Raphael-Account', max_length=128)] = None):
     if expected_uid is not None and expected_uid != user.uid:
         raise HTTPException(409, '帳號已變更，請重新開啟記憶頁面')
@@ -76,7 +76,7 @@ def topic_catalog(user=Depends(require_admin), reader=Depends(get_memory_reader)
 
 
 @router.get('')
-def list_memories(user=Depends(require_admin), reader=Depends(get_memory_reader),
+def list_memories(user=Depends(require_ai_user), reader=Depends(get_memory_reader),
                   limit: Annotated[int, Query(ge=1, le=20)] = 10,
                   cursor: Annotated[str | None, Query(min_length=1, max_length=512)] = None,
                   topic: Annotated[str | None, Query(min_length=1, max_length=64)] = None,
@@ -112,7 +112,7 @@ def list_memories(user=Depends(require_admin), reader=Depends(get_memory_reader)
 
 
 @router.get('/{memory_id}')
-def memory_detail(memory_id: str, user=Depends(require_admin), reader=Depends(get_memory_reader)):
+def memory_detail(memory_id: str, user=Depends(require_ai_user), reader=Depends(get_memory_reader)):
     if not re.fullmatch(r'[a-f0-9]{64}', memory_id):
         raise HTTPException(404, '找不到記憶')
     try:

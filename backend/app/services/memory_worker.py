@@ -27,10 +27,12 @@ def build_pipeline(db, settings):
     return capture, router
 
 
-def process_job(jobs, capture, router, row, stopped=lambda: False):
+def process_job(jobs, capture, router, row, stopped=lambda: False, authorized=lambda: True):
     def checkpoint():
         if stopped():
             raise CaptureError('interrupted')
+        if not authorized():
+            raise CaptureError('access_revoked')
         if not jobs.touch(row):
             raise CaptureError('job_no_longer_active')
     try:
@@ -46,7 +48,7 @@ def process_job(jobs, capture, router, row, stopped=lambda: False):
         jobs.finish(row, 'succeeded', analysis_id=document['_id'], routing=outcomes)
     except (GeminiError, CaptureError) as exc:
         # Do not store provider bodies, exception messages or private text.
-        known = {'interrupted', 'source_unavailable', 'sources_changed', 'revision_conflict',
+        known = {'access_revoked', 'interrupted', 'source_unavailable', 'sources_changed', 'revision_conflict',
                  'matching_context_limit', 'not_configured', 'rate_limited', 'read_timeout', 'connect_timeout'}
         reason = exc.reason if isinstance(exc, GeminiError) else str(exc)
         jobs.finish(row, 'failed', error=reason if reason in known else 'analysis_failed')
@@ -73,12 +75,29 @@ class MemoryWorker:
         jobs = MemoryJobsRepository(self.db['records'])
         capture, router = build_pipeline(self.db, self.settings)
         while not self.stop_event.is_set():
-            try:
-                jobs.expire(self.settings.admin_uid)
-                row = jobs.claim(self.settings.admin_uid)
-                if row is not None:
-                    process_job(jobs, capture, router, row, self.stop_event.is_set)
-                    continue
-            except Exception:
-                logger.warning('Memory worker unavailable; pending jobs remain stored')
-            self.stop_event.wait(3)
+            processed = False
+            # One job per UID each round prevents a busy user starving others.
+            for uid in sorted(self.settings.ai_user_uids):
+                if self.stop_event.is_set():
+                    break
+                try:
+                    jobs.expire(uid)
+                    if not self.account_enabled(uid):
+                        continue
+                    row = jobs.claim(uid)
+                    if row is not None:
+                        process_job(jobs, capture, router, row, self.stop_event.is_set,
+                                    authorized=lambda uid=uid: self.account_enabled(uid))
+                        processed = True
+                except Exception:
+                    logger.warning('Memory worker unavailable; pending jobs remain stored')
+            if not processed:
+                self.stop_event.wait(3)
+
+    def account_enabled(self, uid):
+        if uid not in self.settings.ai_user_uids:
+            return False
+        if uid == self.settings.admin_uid:
+            return True
+        entry = self.db['access_users'].find_one({'_id': uid})
+        return entry.get('enabled') is True if entry is not None else uid in self.settings.allowed_uids

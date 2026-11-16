@@ -108,3 +108,15 @@ def test_adapter_cannot_bypass_source_validation(preview_context):
     model.analyze.return_value.items[0].evidence.sources[0].quote = 'invented'
     assert post(client).status_code == 502
     assert not _preview_lock.locked()
+
+
+def test_allowed_tester_can_preview_without_admin_or_record_writes(preview_context):
+    client, records, model = preview_context
+    settings = app.dependency_overrides[get_settings]()
+    app.dependency_overrides[get_settings] = lambda: replace(settings, ai_allowed_uids=frozenset({'user-b'}))
+    app.state.database_connection.database = {'access_users': SimpleNamespace(find_one=lambda query: None)}
+    login_as(client, 'b')
+    assert post(client).status_code == 200
+    assert client.get('/admin/me').status_code == 403
+    model.analyze.assert_called_once()
+    assert records.rows == []

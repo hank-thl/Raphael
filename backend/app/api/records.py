@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request, R
 from pymongo.errors import PyMongoError
 
 from app.core.security import CurrentUser, get_current_user, require_csrf
+from app.core.ai_access import ai_user_allowed
 from app.core.config import Settings, get_settings
 from app.db import get_database
 from app.repositories.records import RecordsRepository, decode_cursor
@@ -38,7 +39,7 @@ def create_record(
 ) -> RecordResponse:
     with database_operation():
         return repository.create(user.uid, body.content, analyze=bool(
-            settings.ai_capture_enabled and settings.admin_uid and user.uid == settings.admin_uid))
+            settings.ai_capture_enabled and ai_user_allowed(user.uid, settings)))
 
 
 @router.get("", response_model=RecordPage)

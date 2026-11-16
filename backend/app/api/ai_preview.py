@@ -6,7 +6,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import Field, field_validator
 
-from app.api.admin import require_admin
+from app.core.ai_access import require_ai_user
 from app.core.config import get_settings
 from app.core.security import require_csrf
 from app.schemas.extraction import ExtractionInput, ExtractionResult, SourceRecord, StrictModel
@@ -41,7 +41,7 @@ def get_preview_extractor(settings=Depends(get_settings)):
 
 
 @router.post('', response_model=PreviewResponse, dependencies=[Depends(require_csrf)])
-def preview(body: PreviewRequest, user=Depends(require_admin), extractor=Depends(get_preview_extractor),
+def preview(body: PreviewRequest, user=Depends(require_ai_user), extractor=Depends(get_preview_extractor),
             expected_uid: Annotated[str | None, Header(alias='X-Raphael-Account', max_length=128)] = None):
     if expected_uid is not None and expected_uid != user.uid:
         raise HTTPException(409, detail={'code': 'account_changed'})

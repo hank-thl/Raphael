@@ -17,6 +17,11 @@ class Settings:
     gemini_api_key: str = field(default="", repr=False)
     gemini_model: str = ""
     ai_capture_enabled: bool = False
+    ai_allowed_uids: frozenset[str] = frozenset()
+
+    @property
+    def ai_user_uids(self) -> frozenset[str]:
+        return self.ai_allowed_uids | ({self.admin_uid} if self.admin_uid else set())
 
     @property
     def auth_ready(self) -> bool:
@@ -34,6 +39,7 @@ def get_settings() -> Settings:
     if not 300 <= session_seconds <= 1209600:
         raise ValueError("SESSION_SECONDS must be between 300 and 1209600")
     return Settings(
+        ai_allowed_uids=frozenset(filter(None, (s.strip() for s in os.getenv("AI_ALLOWED_FIREBASE_UIDS", "").split(",")))),
         admin_uid=os.getenv("ADMIN_FIREBASE_UID", "").strip(),
         firebase_project_id=os.getenv("FIREBASE_PROJECT_ID", "").strip(),
         allowed_uids=frozenset(filter(None, (s.strip() for s in os.getenv("ALLOWED_FIREBASE_UIDS", "").split(",")))),

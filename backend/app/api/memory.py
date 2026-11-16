@@ -1,4 +1,4 @@
-"""Owner-only job status/retry. Never accepts content, UID or old-record backfill."""
+"""Authorized-user job status/retry. Never accepts content, UID or old-record backfill."""
 from typing import Literal
 
 from bson import ObjectId
@@ -6,16 +6,17 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 from pymongo.errors import PyMongoError
 
+from app.core.ai_access import require_ai_user
 from app.core.config import get_settings
-from app.core.security import get_current_user, require_csrf
+from app.core.security import require_csrf
 from app.db import get_database
 from app.repositories.memory_jobs import MemoryJobsRepository
 
 router = APIRouter(prefix='/records', tags=['memory-processing'])
 
 
-def require_capture_owner(user=Depends(get_current_user), settings=Depends(get_settings)):
-    if not settings.ai_capture_enabled or not settings.admin_uid or user.uid != settings.admin_uid:
+def require_capture_owner(user=Depends(require_ai_user), settings=Depends(get_settings)):
+    if not settings.ai_capture_enabled:
         raise HTTPException(403, '此帳號尚未開放記憶分析')
     return user
 

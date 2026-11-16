@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
 from pydantic import Field, field_validator
 from pymongo.errors import PyMongoError
 
-from app.api.admin import require_admin
+from app.core.ai_access import require_ai_user
 from app.api.memories import get_memory_reader
 from app.core.config import get_settings
 from app.core.security import require_csrf
@@ -50,7 +50,7 @@ def account(user, expected):
 
 
 @router.get('')
-def history(user=Depends(require_admin), service=Depends(get_conversation_service),
+def history(user=Depends(require_ai_user), service=Depends(get_conversation_service),
     limit: Annotated[int, Query(ge=1, le=20)] = 10,
     cursor: Annotated[str | None, Query(min_length=1, max_length=512)] = None,
     expected: Annotated[str | None, Header(alias='X-Raphael-Account', max_length=128)] = None):
@@ -68,7 +68,7 @@ def history(user=Depends(require_admin), service=Depends(get_conversation_servic
 
 
 @router.get('/{request_id}')
-def status(request_id: UUID, user=Depends(require_admin), service=Depends(get_conversation_service),
+def status(request_id: UUID, user=Depends(require_ai_user), service=Depends(get_conversation_service),
     expected: Annotated[str | None, Header(alias='X-Raphael-Account', max_length=128)] = None):
     account(user, expected)
     try:
@@ -81,7 +81,7 @@ def status(request_id: UUID, user=Depends(require_admin), service=Depends(get_co
 
 
 @router.post('', dependencies=[Depends(require_csrf)])
-def ask(body: Question, user=Depends(require_admin), service=Depends(get_conversation_service),
+def ask(body: Question, user=Depends(require_ai_user), service=Depends(get_conversation_service),
     expected: Annotated[str | None, Header(alias='X-Raphael-Account', max_length=128)] = None):
     account(user, expected)
     try:

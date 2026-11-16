@@ -186,7 +186,7 @@ def test_worker_claims_only_configured_owner_and_stops_between_jobs(monkeypatch)
     monkeypatch.setattr(memory_worker, 'MemoryJobsRepository', lambda records: jobs)
     monkeypatch.setattr(memory_worker, 'build_pipeline', lambda db, settings: (Mock(), Mock()))
     worker = memory_worker.MemoryWorker({'records': Mock()}, Settings(admin_uid='owner', ai_capture_enabled=True))
-    def process(jobs_arg, capture, router, row, stopped):
+    def process(jobs_arg, capture, router, row, stopped, authorized):
         assert jobs_arg is jobs and row['user_uid'] == 'owner'
         worker.stop_event.set()
     monkeypatch.setattr(memory_worker, 'process_job', process)

@@ -1,0 +1,610 @@
+[
+  {
+    "id": "fact",
+    "strategy": "fact_retrieval",
+    "language": "zh-TW",
+    "question": "我這次洗頭花多少錢？",
+    "memories": [
+      {
+        "key": "price",
+        "versions": [
+          {
+            "text": "這次洗頭總共花了500元。",
+            "kind": [
+              "event"
+            ],
+            "status": "occurred",
+            "topics": [
+              "生活"
+            ],
+            "time_text": null,
+            "evidence_type": "explicit",
+            "sources": [
+              {
+                "key": "total",
+                "quote": "這次洗頭總共花了500元。",
+                "recorded_at": "2026-11-10T08:00:00+00:00"
+              }
+            ]
+          },
+          {
+            "text": "這次洗頭總共500元，其中洗頭400元、護髮100元。",
+            "kind": [
+              "event"
+            ],
+            "status": "occurred",
+            "topics": [
+              "生活"
+            ],
+            "time_text": null,
+            "evidence_type": "contextual",
+            "sources": [
+              {
+                "key": "total",
+                "quote": "這次洗頭總共花了500元。",
+                "recorded_at": "2026-11-10T08:00:00+00:00"
+              },
+              {
+                "key": "breakdown",
+                "quote": "洗頭400元，護髮100元。",
+                "recorded_at": "2026-11-10T08:05:00+00:00"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "review_checks": [
+      "先答500元及400／100元組成，簡短自然",
+      "引用正確，不添加心理分析"
+    ]
+  },
+  {
+    "id": "synthesis",
+    "strategy": "memory_synthesis",
+    "language": "zh-TW",
+    "question": "幫我整理金澤旅行規劃。",
+    "memories": [
+      {
+        "key": "trip",
+        "versions": [
+          {
+            "text": "考慮二月到金澤旅行，還沒決定日期。",
+            "kind": [
+              "plan"
+            ],
+            "status": "considering",
+            "topics": [
+              "旅行"
+            ],
+            "time_text": null,
+            "evidence_type": "explicit",
+            "sources": [
+              {
+                "key": "trip",
+                "quote": "考慮二月到金澤旅行，還沒決定日期。",
+                "recorded_at": "2026-11-10T08:00:00+00:00"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "key": "route",
+        "versions": [
+          {
+            "text": "這趟金澤旅行考慮從小松機場進出，住宿還沒選。",
+            "kind": [
+              "plan"
+            ],
+            "status": "considering",
+            "topics": [
+              "旅行"
+            ],
+            "time_text": null,
+            "evidence_type": "explicit",
+            "sources": [
+              {
+                "key": "route",
+                "quote": "這趟金澤旅行考慮從小松機場進出，住宿還沒選。",
+                "recorded_at": "2026-11-10T08:00:00+00:00"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "review_checks": [
+      "整合日期、交通、住宿而非逐筆重述",
+      "考慮中不寫成已確定或已購票"
+    ]
+  },
+  {
+    "id": "insight",
+    "strategy": "personal_insight",
+    "language": "zh-TW",
+    "question": "我的近況有什麼值得注意的地方？",
+    "memories": [
+      {
+        "key": "reading",
+        "versions": [
+          {
+            "text": "讀完一本自我探索的書覺得平靜，但還不清楚自己最重視什麼。",
+            "kind": [
+              "observation"
+            ],
+            "status": null,
+            "topics": [
+              "心理",
+              "學習"
+            ],
+            "time_text": null,
+            "evidence_type": "explicit",
+            "sources": [
+              {
+                "key": "reading",
+                "quote": "讀完一本自我探索的書覺得平靜，但還不清楚自己最重視什麼。",
+                "recorded_at": "2026-11-10T08:00:00+00:00"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "key": "values",
+        "versions": [
+          {
+            "text": "我最近又在想，對我來說工作成就和生活自由哪個更重要。",
+            "kind": [
+              "idea"
+            ],
+            "status": null,
+            "topics": [
+              "心理"
+            ],
+            "time_text": null,
+            "evidence_type": "explicit",
+            "sources": [
+              {
+                "key": "values",
+                "quote": "我最近又在想，對我來說工作成就和生活自由哪個更重要。",
+                "recorded_at": "2026-11-12T09:00:00+00:00"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "key": "music",
+        "versions": [
+          {
+            "text": "今天練吉他時覺得很開心。",
+            "kind": [
+              "event",
+              "emotion"
+            ],
+            "status": "occurred",
+            "topics": [
+              "學習",
+              "心情"
+            ],
+            "time_text": null,
+            "evidence_type": "explicit",
+            "sources": [
+              {
+                "key": "music",
+                "quote": "今天練吉他時覺得很開心。",
+                "recorded_at": "2026-11-10T08:00:00+00:00"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "key": "alone",
+        "versions": [
+          {
+            "text": "今晚一個人有點孤單，但不想特別處理。",
+            "kind": [
+              "emotion"
+            ],
+            "status": null,
+            "topics": [
+              "心情"
+            ],
+            "time_text": null,
+            "evidence_type": "explicit",
+            "sources": [
+              {
+                "key": "alone",
+                "quote": "今晚一個人有點孤單，但不想特別處理。",
+                "recorded_at": "2026-11-13T11:00:00+00:00"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "review_checks": [
+      "指出有具體來源的價值探索與生活情境關聯",
+      "不以孤單且不想處理推定接納能力／逃避傾向",
+      "不只列情緒，不制式免責或反問"
+    ]
+  },
+  {
+    "id": "temporal",
+    "strategy": "temporal_analysis",
+    "language": "zh-TW",
+    "question": "我對這個專案的設計想法有什麼改變？",
+    "memories": [
+      {
+        "key": "design",
+        "versions": [
+          {
+            "text": "最初考慮把介面改成藍色，還沒決定。",
+            "kind": [
+              "idea"
+            ],
+            "status": "considering",
+            "topics": [
+              "專案"
+            ],
+            "time_text": null,
+            "evidence_type": "explicit",
+            "sources": [
+              {
+                "key": "design",
+                "quote": "最初考慮把介面改成藍色，還沒決定。",
+                "recorded_at": "2026-11-10T08:00:00+00:00"
+              }
+            ]
+          },
+          {
+            "text": "後來決定保留綠色介面，先改善手機輸入操作。",
+            "kind": [
+              "decision"
+            ],
+            "status": "confirmed",
+            "topics": [
+              "專案"
+            ],
+            "time_text": null,
+            "evidence_type": "contextual",
+            "sources": [
+              {
+                "key": "design",
+                "quote": "最初考慮把介面改成藍色，還沒決定。",
+                "recorded_at": "2026-11-10T08:00:00+00:00"
+              },
+              {
+                "key": "decision",
+                "quote": "我決定先保留綠色介面，先把手機輸入做好。",
+                "recorded_at": "2026-11-14T09:00:00+00:00"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "review_checks": [
+      "區分最初考慮與後續明確決定",
+      "保留歷史，不把更新時間當事件時間或人格證據"
+    ]
+  },
+  {
+    "id": "general",
+    "strategy": "general_qa",
+    "language": "zh-TW",
+    "question": "什麼是接納承諾療法（ACT）？",
+    "memories": [],
+    "review_checks": [
+      "直接解釋一般知識，不強制個人記憶來源",
+      "不說缺乏個人紀錄所以無法回答",
+      "不假裝做過網路或醫學查證"
+    ]
+  },
+  {
+    "id": "mixed",
+    "strategy": "general_and_personal",
+    "language": "zh-TW",
+    "question": "什麼是習慣？這和我最近練琴有關嗎？",
+    "memories": [
+      {
+        "key": "practice",
+        "versions": [
+          {
+            "text": "這週我每天晚飯後都練吉他10分鐘，想繼續維持。",
+            "kind": [
+              "event",
+              "plan"
+            ],
+            "status": "considering",
+            "topics": [
+              "學習"
+            ],
+            "time_text": null,
+            "evidence_type": "explicit",
+            "sources": [
+              {
+                "key": "practice",
+                "quote": "這週我每天晚飯後都練吉他10分鐘，想繼續維持。",
+                "recorded_at": "2026-11-10T08:00:00+00:00"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "review_checks": [
+      "一般概念用general且不假造記憶引用",
+      "個人練習的觀察／解讀引用真實來源，兩者區分"
+    ]
+  },
+  {
+    "id": "question_only",
+    "strategy": "personal_insight",
+    "language": "zh-TW",
+    "question": "我是不是一向容易緊張？",
+    "memories": [
+      {
+        "key": "self_question",
+        "versions": [
+          {
+            "text": "我是不是一向容易緊張？",
+            "kind": [
+              "idea"
+            ],
+            "status": null,
+            "topics": [
+              "心理"
+            ],
+            "time_text": null,
+            "evidence_type": "explicit",
+            "sources": [
+              {
+                "key": "self_question",
+                "quote": "我是不是一向容易緊張？",
+                "recorded_at": "2026-11-10T08:00:00+00:00"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "review_checks": [
+      "記錄過疑問不證明其前提成立",
+      "簡短說明未知，不虛構人格或原因"
+    ]
+  },
+  {
+    "id": "ja",
+    "strategy": "fact_retrieval",
+    "language": "ja",
+    "question": "今回の洗髪代はいくらだった？",
+    "memories": [
+      {
+        "key": "price",
+        "versions": [
+          {
+            "text": "這次洗頭總共花了500元。",
+            "kind": [
+              "event"
+            ],
+            "status": "occurred",
+            "topics": [
+              "生活"
+            ],
+            "time_text": null,
+            "evidence_type": "explicit",
+            "sources": [
+              {
+                "key": "total",
+                "quote": "這次洗頭總共花了500元。",
+                "recorded_at": "2026-11-10T08:00:00+00:00"
+              }
+            ]
+          },
+          {
+            "text": "這次洗頭總共500元，其中洗頭400元、護髮100元。",
+            "kind": [
+              "event"
+            ],
+            "status": "occurred",
+            "topics": [
+              "生活"
+            ],
+            "time_text": null,
+            "evidence_type": "contextual",
+            "sources": [
+              {
+                "key": "total",
+                "quote": "這次洗頭總共花了500元。",
+                "recorded_at": "2026-11-10T08:00:00+00:00"
+              },
+              {
+                "key": "breakdown",
+                "quote": "洗頭400元，護髮100元。",
+                "recorded_at": "2026-11-10T08:05:00+00:00"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "review_checks": [
+      "日文自然丁寧、直接回答數字",
+      "保留引用，不翻譯或改寫原始證據"
+    ]
+  },
+  {
+    "id": "en",
+    "strategy": "memory_synthesis",
+    "language": "en",
+    "question": "What have I planned for the Kanazawa trip?",
+    "memories": [
+      {
+        "key": "trip",
+        "versions": [
+          {
+            "text": "考慮二月到金澤旅行，還沒決定日期。",
+            "kind": [
+              "plan"
+            ],
+            "status": "considering",
+            "topics": [
+              "旅行"
+            ],
+            "time_text": null,
+            "evidence_type": "explicit",
+            "sources": [
+              {
+                "key": "trip",
+                "quote": "考慮二月到金澤旅行，還沒決定日期。",
+                "recorded_at": "2026-11-10T08:00:00+00:00"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "key": "route",
+        "versions": [
+          {
+            "text": "這趟金澤旅行考慮從小松機場進出，住宿還沒選。",
+            "kind": [
+              "plan"
+            ],
+            "status": "considering",
+            "topics": [
+              "旅行"
+            ],
+            "time_text": null,
+            "evidence_type": "explicit",
+            "sources": [
+              {
+                "key": "route",
+                "quote": "這趟金澤旅行考慮從小松機場進出，住宿還沒選。",
+                "recorded_at": "2026-11-10T08:00:00+00:00"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "review_checks": [
+      "英文自然簡潔，整合相關安排",
+      "維持未決狀態與引用"
+    ]
+  },
+  {
+    "id": "th",
+    "strategy": "personal_insight",
+    "language": "th",
+    "question": "ช่วงนี้มีประเด็นอะไรในชีวิตฉันที่น่าสังเกตบ้าง",
+    "memories": [
+      {
+        "key": "reading",
+        "versions": [
+          {
+            "text": "讀完一本自我探索的書覺得平靜，但還不清楚自己最重視什麼。",
+            "kind": [
+              "observation"
+            ],
+            "status": null,
+            "topics": [
+              "心理",
+              "學習"
+            ],
+            "time_text": null,
+            "evidence_type": "explicit",
+            "sources": [
+              {
+                "key": "reading",
+                "quote": "讀完一本自我探索的書覺得平靜，但還不清楚自己最重視什麼。",
+                "recorded_at": "2026-11-10T08:00:00+00:00"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "key": "values",
+        "versions": [
+          {
+            "text": "我最近又在想，對我來說工作成就和生活自由哪個更重要。",
+            "kind": [
+              "idea"
+            ],
+            "status": null,
+            "topics": [
+              "心理"
+            ],
+            "time_text": null,
+            "evidence_type": "explicit",
+            "sources": [
+              {
+                "key": "values",
+                "quote": "我最近又在想，對我來說工作成就和生活自由哪個更重要。",
+                "recorded_at": "2026-11-12T09:00:00+00:00"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "key": "music",
+        "versions": [
+          {
+            "text": "今天練吉他時覺得很開心。",
+            "kind": [
+              "event",
+              "emotion"
+            ],
+            "status": "occurred",
+            "topics": [
+              "學習",
+              "心情"
+            ],
+            "time_text": null,
+            "evidence_type": "explicit",
+            "sources": [
+              {
+                "key": "music",
+                "quote": "今天練吉他時覺得很開心。",
+                "recorded_at": "2026-11-10T08:00:00+00:00"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "key": "alone",
+        "versions": [
+          {
+            "text": "今晚一個人有點孤單，但不想特別處理。",
+            "kind": [
+              "emotion"
+            ],
+            "status": null,
+            "topics": [
+              "心情"
+            ],
+            "time_text": null,
+            "evidence_type": "explicit",
+            "sources": [
+              {
+                "key": "alone",
+                "quote": "今晚一個人有點孤單，但不想特別處理。",
+                "recorded_at": "2026-11-13T11:00:00+00:00"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "review_checks": [
+      "泰文自然有禮，提供具體個人脈絡",
+      "推論不超出來源，避免制式免責"
+    ]
+  }
+]

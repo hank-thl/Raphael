@@ -300,3 +300,29 @@ def test_v3_wire_schema_and_prompt_describe_multiple_kinds_and_fixed_states():
     assert choices[1] == {'type': 'null'}
     assert CONTRACT_VERSION.endswith('-v4')
     assert 'A feeling alone has status null' in SYSTEM_INSTRUCTION
+
+
+def test_usage_instrumentation_only_returns_safe_numeric_fields():
+    body = envelope()
+    body['usageMetadata'] = {'promptTokenCount': 100, 'candidatesTokenCount': 30,
+                             'thoughtsTokenCount': 20, 'totalTokenCount': 150,
+                             'cachedContentTokenCount': True, 'private': 'secret', 'model': 'secret'}
+    usage = []
+    model = extractor(lambda request: httpx.Response(200, json=body))
+    result = model.generate('{}', {}, 'test', usage_callback=usage.append)
+    assert result == valid_result()
+    assert usage == [{'promptTokenCount': 100, 'candidatesTokenCount': 30,
+                      'thoughtsTokenCount': 20, 'totalTokenCount': 150}]
+
+
+def test_usage_callback_failure_cannot_break_successful_generation():
+    def broken(_usage):
+        raise RuntimeError('instrumentation failure')
+    result = extractor(lambda request: httpx.Response(200, json=envelope())).generate('{}', {}, 'test', usage_callback=broken)
+    assert result == valid_result()
+
+
+def test_missing_usage_is_not_fabricated_as_zero():
+    usage = []
+    extractor(lambda request: httpx.Response(200, json=envelope())).generate('{}', {}, 'test', usage_callback=usage.append)
+    assert usage == [{}]

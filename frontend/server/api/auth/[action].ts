@@ -3,6 +3,7 @@ const routes = {
   login: 'POST',
   logout: 'POST',
   me: 'GET',
+  capabilities: 'GET',
 } as const
 
 export default defineEventHandler(async (event) => {
