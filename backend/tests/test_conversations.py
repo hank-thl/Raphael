@@ -16,7 +16,7 @@ from app.repositories.records import utc_now
 from app.schemas.memory_answer import MemoryAnswer
 from app.services.conversations import ConversationService
 from app.services.gemini import GeminiError
-from app.services.memory_answer import MemoryAnswerService
+from app.services.memory_answer import AnswerError, MemoryAnswerService
 from test_memory_answer import setup as answer_setup
 from test_records import context as record_context, login_as, write_headers
 
@@ -52,6 +52,21 @@ class Collection:
             if matches(row, query):
                 row.update(deepcopy(update['$set'])); return deepcopy(row)
         return None
+
+
+def test_retrieval_route_is_saved_in_processing_without_changing_answer_contract(answer_setup):
+    _, reader, extractor, memory = answer_setup
+    reader.memories.collection.find.return_value = [memory]
+    answerer = Mock(reader=reader, extractor=extractor)
+    route = {'mode': 'atlas', 'version': 'chat-atlas-pilot-v1'}
+    answerer.generate.return_value = {'answer': MemoryAnswer.model_validate(extractor.generate.return_value),
+        'inputs': [MemoryAnswerService.dependency(memory)], 'retrieval': route}
+    collection = Collection()
+    response = ConversationService(ConversationsRepository(collection), answerer).ask('owner', str(uuid4()), '問題')
+    assert response['state'] == 'succeeded'
+    assert collection.rows[0]['processing']['retrieval'] == route
+    assert response['retrieval_mode'] == 'atlas'
+    assert 'retrieval' not in response['answer']
 
 
 def test_repository_idempotent_owner_scope_and_conflicts():
@@ -108,11 +123,38 @@ def test_turn_saved_separately_and_repeated_request_never_calls_model_twice(conv
     rid = str(uuid4())
     result = service.ask('alice', rid, 'question')
     assert result['state'] == 'succeeded' and result['answer']['insufficient_information']
+    assert result['retrieval_mode'] == 'direct'
     assert 'user_uid' not in result and 'inputs' not in result
     assert service.ask('alice', rid, 'question') == result
     assert len(collection.rows) == 1 and answerer.generate.call_count == 1
     assert collection.rows[0]['user_uid'] == 'alice'
     assert set(collection.rows[0]) >= {'question', 'answer', 'processing'}
+
+
+def test_old_answers_without_route_are_not_inferred_from_current_settings(conversation_setup):
+    service, collection, answerer = conversation_setup
+    service.ask('alice', str(uuid4()), 'question')
+    collection.rows[0]['processing'].pop('retrieval')
+    result = service.public('alice', collection.rows)[0]
+    assert result['state'] == 'succeeded' and result['retrieval_mode'] is None
+
+
+@pytest.mark.parametrize('route', [None, 'atlas', {'mode': 'unknown'}, {'mode': ['atlas']}])
+def test_invalid_route_metadata_is_not_exposed(conversation_setup, route):
+    service, collection, answerer = conversation_setup
+    service.ask('alice', str(uuid4()), 'question')
+    collection.rows[0]['processing']['retrieval'] = route
+    assert service.public('alice', collection.rows)[0]['retrieval_mode'] is None
+
+
+@pytest.mark.parametrize('state', ['failed', 'invalid', 'running'])
+def test_non_successful_answers_do_not_display_route(conversation_setup, state):
+    service, collection, answerer = conversation_setup
+    service.ask('alice', str(uuid4()), 'question')
+    collection.rows[0]['state'] = state
+    collection.rows[0]['processing']['retrieval'] = {'mode': 'atlas', 'reason': 'private implementation detail'}
+    result = service.public('alice', collection.rows)[0]
+    assert result['retrieval_mode'] is None and result['answer'] is None
 
 
 def test_running_request_does_not_invoke_provider_again(conversation_setup):
@@ -293,3 +335,23 @@ def test_legacy_v1_history_is_still_readable(conversation_setup):
     collection.rows[0]['processing'] = {'version': 'memory-answer-v1', 'prompt_version': 'memory-answer-analysis-v1.3'}
     assert service.ask('alice', rid, 'question')['state'] == 'succeeded'
     assert answerer.generate.call_count == 1
+
+
+@pytest.mark.parametrize('failure,stage,reason', [
+    (GeminiError('read_timeout'), 'provider', 'read_timeout'),
+    (GeminiError('configuration_rejected', status_code=400), 'provider', 'configuration_rejected'),
+    (AnswerError('invalid_answer'),
+     'answer_validation', 'invalid_answer'),
+    (GeminiError('private-provider-body'), 'provider', 'unknown_error'),
+])
+def test_failure_log_reports_safe_stage_without_private_content(conversation_setup, caplog, failure, stage, reason):
+    service, _, answerer = conversation_setup
+    answerer.generate.side_effect = failure
+    result = service.ask('private-user', str(uuid4()), 'private-question')
+    assert result['state'] == 'failed'
+    assert f'stage={stage} reason={reason}' in caplog.text
+    assert 'private-user' not in caplog.text
+    assert 'private-question' not in caplog.text
+    assert 'private-provider-body' not in caplog.text
+    if isinstance(failure, GeminiError) and failure.status_code == 400:
+        assert 'status=400' in caplog.text

@@ -282,6 +282,12 @@
     "notStored": "This question was not found yet. You can retry the same request.",
     "checkFirst": "Check the outcome of this question before sending another message.",
     "check": "Check result",
-    "retry": "Retry original request"
+    "retry": "Retry original request",
+    "retrieval": {
+      "atlas": "Memory search",
+      "direct": "Direct memory reading",
+      "atlasDescription": "Answered after searching for relevant memories.",
+      "directDescription": "Answered by directly reading available memories."
+    }
   }
 }

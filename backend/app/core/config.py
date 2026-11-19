@@ -18,6 +18,8 @@ class Settings:
     gemini_model: str = ""
     ai_capture_enabled: bool = False
     ai_allowed_uids: frozenset[str] = frozenset()
+    atlas_chat_enabled: bool = False
+    atlas_chat_allowed_uids: frozenset[str] = frozenset()
 
     @property
     def ai_user_uids(self) -> frozenset[str]:
@@ -52,4 +54,6 @@ def get_settings() -> Settings:
         gemini_api_key=os.getenv("GEMINI_API_KEY", "").strip(),
         gemini_model=os.getenv("GEMINI_MODEL", "").strip(),
         ai_capture_enabled=os.getenv("AI_CAPTURE_ENABLED", "false").lower() == "true",
+        atlas_chat_enabled=os.getenv("ATLAS_CHAT_ENABLED", "false").lower() == "true",
+        atlas_chat_allowed_uids=frozenset(filter(None, (s.strip() for s in os.getenv("ATLAS_CHAT_ALLOWED_FIREBASE_UIDS", "").split(",")))),
     )

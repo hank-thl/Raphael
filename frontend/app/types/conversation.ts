@@ -7,6 +7,7 @@ export interface ConversationTurn {
   state: 'running' | 'succeeded' | 'failed' | 'invalid'
   answer: { passages: { text: string; basis: 'explicit' | 'contextual' | 'inferred' | 'limitation' | 'general'; sources: SummarySource[] }[]; insufficient_information: boolean } | null
   error: string | null
+  retrieval_mode?: 'atlas' | 'direct' | null
   created_at: string
   updated_at: string
 }

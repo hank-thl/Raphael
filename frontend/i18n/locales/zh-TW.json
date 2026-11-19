@@ -282,6 +282,12 @@
     "notStored": "尚未查到這筆提問，可用同一請求重試。",
     "checkFirst": "請先確認這次提問的處理結果，再送出新訊息。",
     "check": "檢查結果",
-    "retry": "重試原請求"
+    "retry": "重試原請求",
+    "retrieval": {
+      "atlas": "記憶搜尋",
+      "direct": "記憶直讀",
+      "atlasDescription": "搜尋相關記憶後回答。",
+      "directDescription": "直接讀取可用記憶後回答。"
+    }
   }
 }

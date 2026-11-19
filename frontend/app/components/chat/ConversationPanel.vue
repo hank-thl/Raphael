@@ -144,6 +144,9 @@ onBeforeUnmount(() => { active = false; generation++; sender.dispose(); if (poll
               <p v-else-if="turn.state === 'failed'" class="text-sm leading-relaxed text-chat-error">{{ t(turn.error === 'input_limit' ? 'conversation.limit' : 'conversation.answerFailed') }}</p>
               <div v-else-if="turn.answer" class="space-y-3">
                 <SynthesisPassage v-for="(passage, index) in turn.answer.passages" :key="index" :passage="passage" citation-style="icon" :sources="sources" :source-busy="sourceBusy" :disabled="busy" @source="source($event, turn)" />
+                <p v-if="turn.retrieval_mode === 'atlas' || turn.retrieval_mode === 'direct'" class="text-[10px] leading-relaxed text-chat-muted">
+                  <span class="inline-block rounded-full border border-chat-green/15 px-2 py-0.5" :title="t(`conversation.retrieval.${turn.retrieval_mode}Description`)">{{ t(`conversation.retrieval.${turn.retrieval_mode}`) }}</span>
+                </p>
               </div>
             </div>
           </li>

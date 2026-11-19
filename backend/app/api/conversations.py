@@ -14,8 +14,7 @@ from app.db import get_database
 from app.repositories.conversations import ConversationsRepository, decode_cursor, encode_cursor
 from app.schemas.extraction import StrictModel
 from app.services.conversations import ConversationService
-from app.services.gemini import GeminiExtractor
-from app.services.memory_answer import MemoryAnswerService
+from app.services.chat_answer import build_chat_answerer
 
 router = APIRouter(prefix='/conversations', tags=['conversations'])
 
@@ -40,8 +39,9 @@ class Question(StrictModel):
 
 
 def get_conversation_service(request: Request, reader=Depends(get_memory_reader), settings=Depends(get_settings)):
-    return ConversationService(ConversationsRepository(get_database(request)['conversations']),
-        MemoryAnswerService(reader, GeminiExtractor(settings.gemini_api_key, settings.gemini_model)))
+    db = get_database(request)
+    answerer = build_chat_answerer(reader, db, settings)
+    return ConversationService(ConversationsRepository(db['conversations']), answerer)
 
 
 def account(user, expected):
