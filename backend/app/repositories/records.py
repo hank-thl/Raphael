@@ -7,7 +7,7 @@ from typing import Any
 from bson import ObjectId
 from bson.errors import InvalidId
 
-from app.schemas.record import RecordPage, RecordResponse
+from app.schemas.record import RecordPage, RecordResponse, memory_status_response
 
 RECORD_INDEX = [("user_uid", 1), ("deleted_at", 1), ("created_at", -1), ("_id", -1)]
 RECORD_INDEX_NAME = "user_active_newest"
@@ -19,9 +19,10 @@ def utc_now() -> datetime:
     return now.replace(microsecond=now.microsecond // 1000 * 1000)
 
 
-def record_response(document: dict[str, Any]) -> RecordResponse:
+def record_response(document: dict[str, Any], *, include_processing: bool = False) -> RecordResponse:
     return RecordResponse(id=str(document["_id"]), content=document["content"],
-                          created_at=document["created_at"])
+                          created_at=document["created_at"],
+                          memory_processing=memory_status_response(document) if include_processing else None)
 
 
 def encode_cursor(document: dict[str, Any]) -> str:
@@ -56,9 +57,10 @@ class RecordsRepository:
             from app.repositories.memory_jobs import pending_job
             document['ai_processing'] = pending_job()
         self.collection.insert_one(document)
-        return record_response(document)
+        return record_response(document, include_processing=analyze)
 
-    def list(self, uid: str, limit: int, cursor: tuple[datetime, ObjectId] | None) -> RecordPage:
+    def list(self, uid: str, limit: int, cursor: tuple[datetime, ObjectId] | None,
+             *, include_processing: bool = False) -> RecordPage:
         query: dict[str, Any] = {"user_uid": uid, "deleted_at": None}
         if cursor is not None:
             created_at, record_id = cursor
@@ -69,7 +71,7 @@ class RecordsRepository:
         rows = list(self.collection.find(query).sort([("created_at", -1), ("_id", -1)]).limit(limit + 1))
         documents = rows[:limit]
         return RecordPage(
-            items=[record_response(row) for row in documents],
+            items=[record_response(row, include_processing=include_processing) for row in documents],
             next_cursor=encode_cursor(documents[-1]) if len(rows) > limit else None,
         )
 

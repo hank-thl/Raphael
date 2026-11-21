@@ -65,6 +65,12 @@ export function createMemoryMonitor(options: Options) {
   }
   return {
     refresh, retry,
+    seed(values: Record<string, MemoryJobStatus>) {
+      for (const [id, value] of Object.entries(values)) {
+        // A history snapshot must never replace a newer status/retry response.
+        if (tracked(id) && !states.has(id) && !reading.has(id) && !retrying.has(id)) apply(id, value)
+      }
+    },
     poll() { return refresh(options.ids().filter(id => ['pending', 'running'].includes(states.get(id)?.state || ''))) },
     unknown() { return options.ids().filter(id => !states.has(id)) },
     prune() { const ids = new Set(options.ids()); for (const id of states.keys()) if (!ids.has(id)) states.delete(id) },

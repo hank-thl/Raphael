@@ -2,9 +2,10 @@ import type { MemoryJobStatus } from '~/types/memory'
 import { createMemoryMonitor } from '~/utils/memory-monitor'
 import { recordErrorStatus } from '~/utils/records'
 
-export function useMemoryProcessing(ids: () => string[], enabled: () => boolean, onExpired: (error: unknown) => void) {
+export function useMemoryProcessing(ids: () => string[], enabled: () => boolean, onExpired: (error: unknown) => void,
+  initial: () => Record<string, MemoryJobStatus> = () => ({})) {
   const api = useRecords()
-  const statuses = ref<Record<string, MemoryJobStatus>>({})
+  const statuses = ref<Record<string, MemoryJobStatus>>(enabled() ? { ...initial() } : {})
   const unavailable = ref<Record<string, boolean>>({})
   const retrying = ref<Record<string, boolean>>({})
   const forbidden = ref(false)
@@ -36,7 +37,7 @@ export function useMemoryProcessing(ids: () => string[], enabled: () => boolean,
     for (const map of [statuses.value, unavailable.value, retrying.value]) {
       for (const id of Object.keys(map)) if (!current.has(id)) delete map[id]
     }
-    if (allowed()) void monitor.refresh(monitor.unknown())
+    if (allowed()) { monitor.seed(initial()); void monitor.refresh(monitor.unknown()) }
   })
   watch(enabled, () => {
     if (!allowed() && timer) { clearTimeout(timer); timer = undefined }
@@ -44,7 +45,8 @@ export function useMemoryProcessing(ids: () => string[], enabled: () => boolean,
   })
   onMounted(() => {
     mounted = true
-    refresh()
+    monitor.seed(initial())
+    if (allowed()) void monitor.refresh(monitor.unknown())
     if (allowed()) void tick()
     document.addEventListener('visibilitychange', visibility)
   })

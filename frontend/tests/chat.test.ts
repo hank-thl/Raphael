@@ -27,3 +27,10 @@ test('overlapping history and saved responses merge once in chronological order'
 test('empty history retains exhausted cursor', () => {
   assert.deepEqual(recordPageToHistory({ items: [], next_cursor: null }), { messages: [], nextCursor: null })
 })
+
+test('history includes analysis snapshot without changing saved message status', () => {
+  const job = { state: 'succeeded' as const, attempts: 1, error: null }
+  const message = recordToMessage({ id: 'a', content: 'original', created_at: '2026-11-08T09:00:00Z', memory_processing: job })
+  assert.deepEqual(message.memoryProcessing, job)
+  assert.equal(message.status, 'success')
+})

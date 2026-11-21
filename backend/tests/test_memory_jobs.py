@@ -28,7 +28,8 @@ def test_only_enabled_owner_new_records_are_enqueued_atomically(record_context):
     login_as(client)
     response = client.post('/records', json={'content': 'new personal message'}, headers=write_headers(client))
     assert response.status_code == 201
-    assert set(response.json()) == {'id', 'content', 'created_at'}
+    assert set(response.json()) == {'id', 'content', 'created_at', 'memory_processing'}
+    assert response.json()['memory_processing'] == {'state': 'pending', 'attempts': 0, 'error': None}
     assert collection.rows[0]['ai_processing']['state'] == 'pending'
     assert collection.rows[0]['ai_processing']['attempts'] == 0
     login_as(client, 'b')
@@ -41,6 +42,29 @@ def test_feature_default_off_keeps_original_capture_behavior(record_context):
     login_as(client)
     client.post('/records', json={'content': 'saved only'}, headers=write_headers(client))
     assert 'ai_processing' not in collection.rows[0]
+
+
+def test_history_includes_safe_status_only_for_capture_authorized_owner(record_context):
+    client, collection = record_context
+    enable_owner()
+    own = collection.seed('user-a', 1)
+    own['ai_processing'] = {'state': 'succeeded', 'attempts': 1, 'error': None,
+                            'token': 'secret-token', 'analysis_id': 'internal'}
+    collection.seed('user-a', 2)
+    other = collection.seed('user-b', 3)
+    other['ai_processing'] = dict(own['ai_processing'])
+    login_as(client)
+    collection.queries.clear()
+    response = client.get('/records')
+    assert response.status_code == 200
+    by_id = {row['id']: row for row in response.json()['items']}
+    assert len(by_id) == 2 and len(collection.queries) == 1
+    assert by_id[str(own['_id'])]['memory_processing'] == {
+        'state': 'succeeded', 'attempts': 1, 'error': None}
+    assert {row['memory_processing']['state'] for row in by_id.values()} == {'not_requested', 'succeeded'}
+    assert 'secret-token' not in response.text and 'analysis_id' not in response.text
+    login_as(client, 'b')
+    assert client.get('/records').json()['items'][0]['memory_processing'] is None
 
 
 def test_status_scoped_to_owner_without_exposing_analysis(record_context):

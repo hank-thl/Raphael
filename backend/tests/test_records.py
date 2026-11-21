@@ -126,7 +126,8 @@ def test_create_uses_verified_uid_and_server_times_preserving_text(context):
     assert response.status_code == 201
     assert response.headers["cache-control"] == "no-store"
     data = response.json()
-    assert set(data) == {"id", "content", "created_at"}
+    assert set(data) == {"id", "content", "created_at", "memory_processing"}
+    assert data['memory_processing'] is None
     assert data["content"] == content
     assert ObjectId.is_valid(data["id"])
     document = collection.rows[0]

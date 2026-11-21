@@ -61,6 +61,8 @@ const memory = useMemoryProcessing(
   () => messages.value.filter(item => item.status === 'success' && item.role === 'user').map(item => item.id),
   () => !!admin.value?.capture_enabled && !sessionExpired.value && mode.value === 'record',
   handleError,
+  () => Object.fromEntries(messages.value.filter(item => item.memoryProcessing)
+    .map(item => [item.id, item.memoryProcessing!])),
 )
 function conversationUnauthorized(error: unknown) {
   handleError(error)

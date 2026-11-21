@@ -49,6 +49,7 @@ def list_records(
     expected_uid: Annotated[str | None, Header(alias="X-Raphael-Account", max_length=128)] = None,
     user: CurrentUser = Depends(get_current_user),
     repository: RecordsRepository = Depends(get_records_repository),
+    settings: Settings = Depends(get_settings),
 ) -> RecordPage:
     # This header only checks page consistency; identity always comes from the session.
     if expected_uid is not None and expected_uid != user.uid:
@@ -58,7 +59,8 @@ def list_records(
     except ValueError:
         raise HTTPException(400, "無效的分頁游標") from None
     with database_operation():
-        return repository.list(user.uid, limit, boundary)
+        return repository.list(user.uid, limit, boundary, include_processing=bool(
+            settings.ai_capture_enabled and ai_user_allowed(user.uid, settings)))
 
 
 @router.delete("/{record_id}", status_code=204, dependencies=[Depends(require_csrf)])

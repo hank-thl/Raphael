@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -15,10 +16,24 @@ class RecordCreate(BaseModel):
         return value
 
 
+class MemoryJobStatus(BaseModel):
+    state: Literal['not_requested', 'pending', 'running', 'succeeded', 'failed']
+    attempts: int = 0
+    error: str | None = None
+
+
+def memory_status_response(row):
+    job = row.get('ai_processing')
+    if not job:
+        return MemoryJobStatus(state='not_requested')
+    return MemoryJobStatus(state=job['state'], attempts=job['attempts'], error=job.get('error'))
+
+
 class RecordResponse(BaseModel):
     id: str
     content: str
     created_at: datetime
+    memory_processing: MemoryJobStatus | None = None
 
 
 class RecordPage(BaseModel):

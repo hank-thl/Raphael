@@ -1,9 +1,7 @@
 """Authorized-user job status/retry. Never accepts content, UID or old-record backfill."""
-from typing import Literal
 
 from bson import ObjectId
 from fastapi import APIRouter, Depends, HTTPException, Request
-from pydantic import BaseModel
 from pymongo.errors import PyMongoError
 
 from app.core.ai_access import require_ai_user
@@ -11,6 +9,7 @@ from app.core.config import get_settings
 from app.core.security import require_csrf
 from app.db import get_database
 from app.repositories.memory_jobs import MemoryJobsRepository
+from app.schemas.record import MemoryJobStatus, memory_status_response as status_response
 
 router = APIRouter(prefix='/records', tags=['memory-processing'])
 
@@ -23,19 +22,6 @@ def require_capture_owner(user=Depends(require_ai_user), settings=Depends(get_se
 
 def get_memory_jobs(request: Request):
     return MemoryJobsRepository(get_database(request)['records'])
-
-
-class MemoryJobStatus(BaseModel):
-    state: Literal['not_requested', 'pending', 'running', 'succeeded', 'failed']
-    attempts: int = 0
-    error: str | None = None
-
-
-def status_response(row):
-    job = row.get('ai_processing')
-    if not job:
-        return MemoryJobStatus(state='not_requested')
-    return MemoryJobStatus(state=job['state'], attempts=job['attempts'], error=job.get('error'))
 
 
 @router.get('/{record_id}/memory', response_model=MemoryJobStatus)

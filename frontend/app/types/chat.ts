@@ -1,3 +1,5 @@
+import type { MemoryJobStatus } from './memory.ts'
+
 export type MessageStatus = 'loading' | 'success' | 'error'
 export interface ChatMessage {
   id: string
@@ -6,6 +8,7 @@ export interface ChatMessage {
   createdAt: string
   status: MessageStatus
   uncertain?: boolean
+  memoryProcessing?: MemoryJobStatus
 }
 export interface ChatHistory { messages: ChatMessage[]; nextCursor: string | null }
 // Presentation stays independent of the records API response shape.

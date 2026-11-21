@@ -2,7 +2,8 @@ import type { ChatMessage, ChatHistory } from '../types/chat.ts'
 import type { PersonalRecord, RecordPage } from '../types/record.ts'
 
 export function recordToMessage(record: PersonalRecord): ChatMessage {
-  return { id: record.id, role: 'user', content: record.content, createdAt: record.created_at, status: 'success' }
+  return { id: record.id, role: 'user', content: record.content, createdAt: record.created_at, status: 'success',
+    ...(record.memory_processing ? { memoryProcessing: record.memory_processing } : {}) }
 }
 export function recordPageToHistory(page: RecordPage): ChatHistory {
   return { messages: [...page.items].reverse().map(recordToMessage), nextCursor: page.next_cursor }

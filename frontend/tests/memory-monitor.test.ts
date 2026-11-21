@@ -25,6 +25,20 @@ test('poll only pending/running, not completed analyses', async () => {
   assert.deepEqual(calls, ['a'])
 })
 
+test('seeded completed history needs no status GET; active jobs still poll', async () => {
+  const calls: string[] = []
+  const fixture = setup(async id => { calls.push(id); return status('succeeded') })
+  fixture.monitor.seed({ a: status('succeeded'), b: status('running'), other: status('failed') })
+  assert.deepEqual(fixture.monitor.unknown(), [])
+  assert.equal(fixture.displayed.has('other'), false)
+  await fixture.monitor.refresh(fixture.monitor.unknown())
+  assert.deepEqual(calls, [])
+  await fixture.monitor.poll()
+  assert.deepEqual(calls, ['b'])
+  fixture.monitor.seed({ b: status('pending') })
+  assert.equal(fixture.displayed.get('b')?.state, 'succeeded')
+})
+
 test('delayed GET cannot overwrite retry; double retry sends one POST', async () => {
   const oldGet = deferred<MemoryJobStatus>(), post = deferred<MemoryJobStatus>()
   let reads = 0, posts = 0
