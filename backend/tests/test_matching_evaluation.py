@@ -96,6 +96,27 @@ def test_model_mismatch_is_reported_without_forcing_expected_answer():
     assert result['routing'][0]['action'] == 'new'
 
 
+def test_optional_embedding_uses_result_revision_and_synthetic_collections(monkeypatch):
+    db = Database()
+    jobs = Mock()
+    jobs.claim.return_value = None
+    service = Mock()
+    service.current.return_value = {'revision': 2}
+    jobs_factory = Mock(return_value=jobs)
+    service_factory = Mock(return_value=service)
+    monkeypatch.setattr('app.repositories.embedding_jobs.EmbeddingJobsRepository', jobs_factory)
+    monkeypatch.setattr('app.services.memory_embeddings.MemoryEmbeddingService', service_factory)
+    result = trial.evaluate(db, 'test', Model('supplement'), 'supplement', embedder=Mock())
+    identifier = result['routing'][0]['memory_id']
+    assert result['result_memories'][0]['revision'] == 2
+    jobs.claim.assert_called_once_with(next(iter(db[f'{trial.PREFIX}_memories'].rows.values()))['user_uid'],
+                                       memory_id=identifier)
+    assert jobs_factory.call_args.args[0] is db[f'{trial.PREFIX}_memories']
+    assert result['embedding_results'][0]['vector_revision'] == 2
+    assert result['planned_provider_calls_max'] == 4
+    assert all(name.startswith('memory_matching_eval_') for name in db)
+
+
 @pytest.mark.parametrize('case', list(trial.SCENARIOS))
 def test_default_dry_run_has_no_db_or_api(monkeypatch, capsys, case):
     monkeypatch.setattr('sys.argv', ['try_memory_matching', '--case', case])
@@ -107,7 +128,7 @@ def test_default_dry_run_has_no_db_or_api(monkeypatch, capsys, case):
 def test_scenario_owners_are_isolated_and_seeds_are_idempotent():
     records = Collection()
     identities = [trial.seed(records, case) for case in trial.SCENARIOS]
-    assert len({uid for uid, ids in identities}) == 3
+    assert len({uid for uid, ids in identities}) == len(trial.SCENARIOS)
     count = len(records.rows)
     assert trial.seed(records, 'new') == identities[0]
     assert len(records.rows) == count

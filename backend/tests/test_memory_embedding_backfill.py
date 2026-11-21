@@ -93,3 +93,59 @@ def test_cli_offline_default_and_explicit_save_guard(monkeypatch, capsys):
     with pytest.raises(SystemExit):
         cli.main(['--limit', '21'])
     blocked.assert_not_called()
+
+
+def test_explicit_test_account_is_allowed_without_changing_admin_uid():
+    from app.core.config import Settings
+    settings = Settings(admin_uid='owner', ai_allowed_uids=frozenset({'test'}),
+        atlas_chat_allowed_uids=frozenset({'test'}))
+    assert cli.target_uid(settings, None) == 'owner'
+    assert cli.target_uid(settings, 'test') == 'test'
+    assert settings.admin_uid == 'owner'
+
+
+@pytest.mark.parametrize('ai,atlas', [(True, False), (False, True), (False, False)])
+def test_target_requires_both_allowlists(ai, atlas):
+    from app.core.config import Settings
+    settings = Settings(admin_uid='owner', ai_allowed_uids=frozenset({'test'} if ai else set()),
+        atlas_chat_allowed_uids=frozenset({'test'} if atlas else set()))
+    with pytest.raises(MemoryEmbeddingError, match='account_not_allowed'):
+        cli.target_uid(settings, 'test')
+
+
+def test_next_batch_keeps_uid_scope_and_uses_stable_cursor():
+    after, mid = 'a' * 64, 'b' * 64
+    reader = reader_for([{'_id': mid, 'user_uid': 'test'}])
+    service = Mock()
+    service.snapshot.return_value = ({'user_uid': 'test'}, 'text')
+    service.current.return_value = None
+    plan = cli.plan_batch(reader, service, 'test', 20, after)
+    reader.memories.collection.find.assert_called_once_with(
+        {'user_uid': 'test', 'lifecycle': 'candidate', '_id': {'$gt': after}})
+    reader.memories.collection.find.return_value.sort.assert_called_once_with([('_id', 1)])
+    service.snapshot.assert_called_once_with('test', mid)
+    assert plan['next_after_memory_id'] is None and not plan['more_memories_outside_batch']
+
+
+def test_full_batch_reports_cursor_and_final_batch_ends():
+    rows = [{'_id': f'{i:064x}', 'user_uid': 'test'} for i in range(3)]
+    service = Mock()
+    service.snapshot.return_value = ({}, 'text')
+    service.current.return_value = None
+    plan = cli.plan_batch(reader_for(rows), service, 'test', 2)
+    assert plan['next_after_memory_id'] == rows[1]['_id']
+    assert plan['more_memories_outside_batch']
+    final = cli.plan_batch(reader_for(rows[2:]), service, 'test', 2, plan['next_after_memory_id'])
+    assert [r['memory_id'] for r in final['items']] == [rows[2]['_id']]
+    assert final['next_after_memory_id'] is None
+
+
+def test_disallowed_uid_fails_before_database_or_provider(monkeypatch, capsys):
+    from app.core.config import Settings
+    monkeypatch.setattr(cli, 'get_settings', lambda: Settings(admin_uid='owner', mongodb_uri='fake'))
+    blocked = Mock(side_effect=AssertionError('no network'))
+    monkeypatch.setattr(cli, 'DatabaseConnection', blocked)
+    monkeypatch.setattr(cli, 'GeminiEmbedder', blocked)
+    assert cli.main(['--uid', 'stranger', '--run']) == 1
+    assert json.loads(capsys.readouterr().out)['reason'] == 'account_not_allowed'
+    blocked.assert_not_called()

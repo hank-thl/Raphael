@@ -1,6 +1,6 @@
 """Decision contract separate from extraction; system IDs remain backend-controlled."""
 from typing import Literal
-from pydantic import model_validator
+from pydantic import Field, field_validator, model_validator
 from app.schemas.extraction import StrictModel, MemoryCandidate
 
 
@@ -8,6 +8,14 @@ class MatchDecision(StrictModel):
     action: Literal['new', 'supplement', 'uncertain']
     memory_id: str | None
     merged: MemoryCandidate | None
+    decision_note: str | None = Field(default=None, min_length=1, max_length=300)
+
+    @field_validator('decision_note')
+    @classmethod
+    def nonblank_note(cls, value):
+        if value is not None and not value.strip():
+            raise ValueError('Blank decision note')
+        return value
 
     @model_validator(mode='after')
     def coherent(self):

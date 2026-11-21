@@ -35,8 +35,8 @@ def test_owner_without_context_uses_atlas_and_keeps_validated_sources(context):
     assert extractor.generate.call_count == 1 and reader.memories.collection.find.call_count == 2
 
 
-@pytest.mark.parametrize('reason', ['disabled', 'other_user', 'context'])
-def test_nonpilot_and_previous_context_never_query_atlas(context, reason):
+@pytest.mark.parametrize('reason', ['disabled', 'other_user'])
+def test_nonpilot_never_queries_atlas(context, reason):
     service, reader, extractor, memory, embeddings, search, index = context
     uid, previous = 'owner', ()
     if reason == 'disabled':
@@ -46,8 +46,6 @@ def test_nonpilot_and_previous_context_never_query_atlas(context, reason):
         reader.memories.recent.side_effect = lambda uid: iter([])
         extractor.generate.return_value = {'passages': [{'text': '沒有相關紀錄。', 'basis': 'limitation',
             'sources': []}], 'insufficient_information': True}
-    else:
-        previous = [{'state': 'failed'}]
     assert service.generate(uid, '問題', previous)['retrieval']['mode'] == 'direct'
     search.search.assert_not_called()
     embeddings.current_many.assert_not_called()

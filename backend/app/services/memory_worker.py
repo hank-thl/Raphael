@@ -6,6 +6,11 @@ from app.repositories.analyses import AnalysesRepository
 from app.repositories.content_types import ContentTypesRepository
 from app.repositories.memories import MemoriesRepository
 from app.repositories.memory_jobs import MemoryJobsRepository
+from app.repositories.embedding_jobs import EmbeddingJobsRepository
+from app.repositories.memory_embeddings import MemoryEmbeddingsRepository
+from app.services.embedding_worker import process_embedding_job
+from app.services.embeddings import GeminiEmbedder
+from app.services.memory_embeddings import MemoryEmbeddingService
 from app.services.classification import ClassificationService
 from app.services.gemini import GeminiError, GeminiExtractor
 from app.services.memory_capture import CaptureError, MemoryCaptureService
@@ -74,6 +79,11 @@ class MemoryWorker:
     def run(self):
         jobs = MemoryJobsRepository(self.db['records'])
         capture, router = build_pipeline(self.db, self.settings)
+        embedding_jobs, embedding_service = None, None
+        if self.settings.memory_embedding_enabled and self.settings.embedding_user_uids:
+            embedding_jobs = EmbeddingJobsRepository(self.db['memories'])
+            embedding_service = MemoryEmbeddingService(router.versions,
+                MemoryEmbeddingsRepository(self.db['memory_embeddings']), GeminiEmbedder(self.settings.gemini_api_key))
         while not self.stop_event.is_set():
             processed = False
             # One job per UID each round prevents a busy user starving others.
@@ -81,14 +91,27 @@ class MemoryWorker:
                 if self.stop_event.is_set():
                     break
                 try:
-                    jobs.expire(uid)
+                    if self.settings.ai_capture_enabled:
+                        jobs.expire(uid)
                     if not self.account_enabled(uid):
                         continue
-                    row = jobs.claim(uid)
-                    if row is not None:
-                        process_job(jobs, capture, router, row, self.stop_event.is_set,
+                    if self.settings.ai_capture_enabled:
+                        row = jobs.claim(uid)
+                        if row is not None:
+                            process_job(jobs, capture, router, row, self.stop_event.is_set,
+                                        authorized=lambda uid=uid: self.account_enabled(uid))
+                            processed = True
+                    if (embedding_jobs is not None and uid in self.settings.embedding_user_uids
+                            and not self.stop_event.is_set()):
+                        try:
+                            embedding_jobs.expire(uid)
+                            memory = embedding_jobs.claim(uid)
+                            if memory is not None:
+                                process_embedding_job(embedding_jobs, embedding_service, memory, self.stop_event.is_set,
                                     authorized=lambda uid=uid: self.account_enabled(uid))
-                        processed = True
+                                processed = True
+                        except Exception:
+                            logger.warning('Embedding worker unavailable; pending jobs remain stored')
                 except Exception:
                     logger.warning('Memory worker unavailable; pending jobs remain stored')
             if not processed:

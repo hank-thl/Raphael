@@ -114,7 +114,8 @@ class MemoryEmbeddingService:
         self.recheck(uid, memory_id, expected)
         return cached
 
-    def save(self, uid, memory_id, *, expected_snapshot=None):
+    def save(self, uid, memory_id, *, expected_snapshot=None, checkpoint=lambda: None):
+        checkpoint()
         expected, text = self.snapshot(uid, memory_id)
         if expected_snapshot is not None and expected != expected_snapshot:
             raise MemoryEmbeddingError('sources_changed')
@@ -123,11 +124,13 @@ class MemoryEmbeddingService:
             self.validate(cached, expected)
             self.recheck(uid, memory_id, expected)
             return cached, True
+        checkpoint()
         result = self.embedder.document(text)
         if result.profile != PROFILE or result.task != 'RETRIEVAL_DOCUMENT' or result.text_hash != expected['text_hash']:
             raise MemoryEmbeddingError('embedding_mismatch')
         vector = list(normalize(list(result.vector)))
         self.recheck(uid, memory_id, expected)
+        checkpoint()
         document = {**expected, 'vector': vector, 'created_at': datetime.now(timezone.utc)}
         saved = self.repository.create_once(document)
         self.validate(saved, expected)

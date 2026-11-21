@@ -1,6 +1,7 @@
-"""Bounded admin-only backfill. Offline by default; --run previews, --run --save writes."""
+"""Bounded backfill for explicitly allowed AI accounts. --run previews; --run --save writes."""
 import argparse
 import json
+import re
 
 from app.core.config import get_settings
 from app.db import DatabaseConnection
@@ -26,11 +27,23 @@ class CountedEmbedder:
         return self.provider.document(text)
 
 
-def plan_batch(reader, service, uid, limit):
+def target_uid(settings, requested):
+    uid = requested or settings.admin_uid
+    allowed = {settings.admin_uid} | (settings.atlas_chat_allowed_uids & settings.ai_user_uids)
+    if not uid or uid not in allowed:
+        raise MemoryEmbeddingError('account_not_allowed')
+    return uid
+
+
+def plan_batch(reader, service, uid, limit, after=None):
     if not uid or type(limit) is not int or not 1 <= limit <= MAX_BATCH:
         raise MemoryEmbeddingError('invalid_batch')
-    rows = list(reader.memories.collection.find({'user_uid': uid, 'lifecycle': 'candidate'}).sort(
-        [('created_at', 1), ('_id', 1)]).limit(limit + 1))
+    query = {'user_uid': uid, 'lifecycle': 'candidate'}
+    if after is not None:
+        if not re.fullmatch('[a-f0-9]{64}', after):
+            raise MemoryEmbeddingError('invalid_cursor')
+        query['_id'] = {'$gt': after}
+    rows = list(reader.memories.collection.find(query).sort([('_id', 1)]).limit(limit + 1))
     items = []
     for row in rows[:limit]:
         if row.get('user_uid') != uid:
@@ -46,7 +59,8 @@ def plan_batch(reader, service, uid, limit):
             if reason not in {'memory_unavailable', 'input_limit'}:
                 raise
             items.append({'memory_id': mid, 'action': 'skip', 'reason': reason})
-    return {'items': items, 'more_memories_outside_batch': len(rows) > limit}
+    return {'items': items, 'more_memories_outside_batch': len(rows) > limit,
+            'next_after_memory_id': rows[limit - 1]['_id'] if len(rows) > limit else None}
 
 
 def public_plan(plan):
@@ -70,12 +84,16 @@ def main(argv=None):
     parser.add_argument('--limit', type=int, default=20)
     parser.add_argument('--run', action='store_true')
     parser.add_argument('--save', action='store_true')
+    parser.add_argument('--uid', help='Defaults to admin; other UIDs must be in both AI and Atlas allowlists.')
+    parser.add_argument('--after', help='Continue after next_after_memory_id from a completed batch.')
     args = parser.parse_args(argv)
     if not 1 <= args.limit <= MAX_BATCH:
         parser.error('--limit must be between 1 and 20')
     if args.save and not args.run:
         parser.error('--save requires --run')
-    base = {'profile': PROFILE, 'limit': args.limit, 'automatic_retry': False}
+    if args.after and not re.fullmatch('[a-f0-9]{64}', args.after):
+        parser.error('--after must be a lowercase 64-character hex memory ID')
+    base = {'profile': PROFILE, 'limit': args.limit, 'automatic_retry': False, 'after': args.after}
     if not args.run:
         print(json.dumps({**base, 'mode': 'offline_preview', 'database_accessed': False,
             'database_written': False, 'provider_calls': 0, 'planned_provider_calls_max': args.limit}))
@@ -87,6 +105,8 @@ def main(argv=None):
         settings = get_settings()
         if not settings.admin_uid or not settings.mongodb_uri or (args.save and not settings.gemini_api_key):
             raise MemoryEmbeddingError('not_configured')
+        uid = target_uid(settings, args.uid)
+        base['target_uid'] = uid
         connection = DatabaseConnection(settings)
         connection.open()
         db = connection.database
@@ -96,10 +116,10 @@ def main(argv=None):
                                        MemoriesRepository(db['memories']))
         counted = CountedEmbedder(GeminiEmbedder(settings.gemini_api_key), args.limit)
         service = MemoryEmbeddingService(reader, MemoryEmbeddingsRepository(db['memory_embeddings']), counted)
-        plan = plan_batch(reader, service, settings.admin_uid, args.limit)
+        plan = plan_batch(reader, service, uid, args.limit, args.after)
         if args.save:
             write_phase_started = True
-            for result in save_batch(service, settings.admin_uid, plan):
+            for result in save_batch(service, uid, plan):
                 completed.append(result)
         print(json.dumps({**base, **public_plan(plan), 'state': 'succeeded',
             'mode': 'save' if args.save else 'readonly_preview', 'completed': completed,

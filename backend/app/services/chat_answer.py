@@ -6,6 +6,7 @@ from app.services.memory_answer import AnswerError, MemoryAnswerService
 from app.services.memory_embeddings import MemoryEmbeddingError
 from app.services.memory_search import MemorySearchError
 from app.services.retrieved_answer import RetrievedMemoryAnswerService
+from app.services.retrieval_context import retrieval_context
 from app.services.vector_index import check_index
 
 
@@ -50,14 +51,14 @@ class ChatAnswerService(MemoryAnswerService):
     def generate(self, uid, question, previous=()):
         if not self.enabled or not self.owner or uid not in self.allowed_uids:
             return self.direct(uid, question, previous, 'pilot_disabled')
-        # Prior turns need a separate query-context strategy. Preserve the existing
-        # validated three-turn context instead of performing incomplete retrieval.
-        if previous:
-            return self.direct(uid, question, previous, 'previous_context')
         if not isinstance(question, str) or not question.strip() or len(question) > 10000:
             raise AnswerError('invalid_question')
         try:
             before = self.collect(uid)
+            before_fingerprint = self.fingerprint(before)
+            context = retrieval_context(uid, question, previous, before)
+            if not context['query_fits']:
+                return self.direct(uid, question, previous, 'query_context_limit')
             ids = [row['_id'] for row in before]
             if len(ids) > 30:
                 return self.unavailable(uid, question, previous)
@@ -67,22 +68,32 @@ class ChatAnswerService(MemoryAnswerService):
                 return self.unavailable(uid, question, previous)
             # No on-demand document embeddings. This pilot never writes vectors.
             check_index(self.collection)
-            retrieved = self.search.search(uid, question)
+            retrieved = self.search.search(uid, context['query'])
             # Atlas indexing is asynchronous; even existing vectors may not appear
             # yet. Only use retrieval if every eligible memory is represented in
             # the bounded candidate set, before selecting its top five.
             covered = {row['memory_id']: row['fingerprint'] for row in retrieved['covered_inputs']}
             if retrieved['candidate_cap_reached'] or any(covered.get(mid) != fp for mid, fp in dependencies.items()):
                 return self.unavailable(uid, question, previous)
-            if self.fingerprint(self.collect(uid)) != self.fingerprint(before):
+            if self.fingerprint(self.collect(uid)) != before_fingerprint:
                 raise AnswerError('sources_changed')
             expected = [{'memory_id': row['memory_id'], 'fingerprint': row['fingerprint']}
                         for row in retrieved['results']]
-            result = RetrievedMemoryAnswerService(self.reader, self.extractor, uid, expected).generate(uid, question)
-            if self.fingerprint(self.collect(uid)) != self.fingerprint(before):
+            selected_ids = {item['memory_id'] for item in expected}
+            expected.extend({'memory_id': mid, 'fingerprint': dependencies[mid]}
+                for mid in context['cited_ids'] if mid not in selected_ids)
+            result = RetrievedMemoryAnswerService(self.reader, self.extractor, uid, expected).generate(
+                uid, question, context['previous'])
+            if self.fingerprint(self.collect(uid)) != before_fingerprint:
                 raise AnswerError('sources_changed')
-            result['retrieval'] = {'mode': 'atlas', 'version': 'chat-atlas-pilot-v1',
-                'validation_version': retrieved['validation_version'], 'candidate_count': retrieved['candidate_count']}
+            # Old uncited inputs may have affected the wording of prior answers.
+            # Keep them as invalidation dependencies without supplying every Memory.
+            tracked = {item['memory_id']: item['fingerprint'] for item in result['inputs']}
+            tracked.update(context['dependency_fingerprints'])
+            result['inputs'] = [{'memory_id': mid, 'fingerprint': fp} for mid, fp in tracked.items()]
+            result['retrieval'] = {'mode': 'atlas', 'version': 'chat-atlas-context-v2',
+                'validation_version': retrieved['validation_version'], 'candidate_count': retrieved['candidate_count'],
+                'context_turns': len(context['previous']), 'context_memory_count': len(context['cited_ids'])}
             return result
         except (EmbeddingError, MemorySearchError, MemoryEmbeddingError, PyMongoError):
             # Fail once using the existing conversation failure flow. Never retry

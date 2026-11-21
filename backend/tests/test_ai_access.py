@@ -142,7 +142,7 @@ def test_worker_claims_each_allowed_user_once_and_skips_disabled(monkeypatch):
     jobs.claim.side_effect = lambda uid: {'_id': ObjectId(), 'user_uid': uid}
     monkeypatch.setattr(memory_worker, 'MemoryJobsRepository', lambda records: jobs)
     monkeypatch.setattr(memory_worker, 'build_pipeline', lambda db, settings: (Mock(), Mock()))
-    settings = Settings(admin_uid='owner', ai_allowed_uids=frozenset({'tester', 'disabled'}))
+    settings = Settings(admin_uid='owner', ai_allowed_uids=frozenset({'tester', 'disabled'}), ai_capture_enabled=True)
     access = Mock()
     access.find_one.side_effect = lambda q: {'enabled': q['_id'] != 'disabled'}
     worker = MemoryWorker({'records': Mock(), 'access_users': access}, settings)

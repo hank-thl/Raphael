@@ -42,5 +42,5 @@ def test_topic_acceptance_inputs_and_multi_aspect_output_roundtrip(case, topics,
 
 
 def test_prompt_revision_keeps_existing_contract():
-    assert PROMPT_VERSION == 'memory-extraction-topics-v4.1'
+    assert PROMPT_VERSION == 'memory-extraction-topics-v4.2'
     assert CONTRACT_VERSION == 'extraction-preview-v4'

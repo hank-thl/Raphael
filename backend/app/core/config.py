@@ -20,10 +20,15 @@ class Settings:
     ai_allowed_uids: frozenset[str] = frozenset()
     atlas_chat_enabled: bool = False
     atlas_chat_allowed_uids: frozenset[str] = frozenset()
+    memory_embedding_enabled: bool = False
 
     @property
     def ai_user_uids(self) -> frozenset[str]:
         return self.ai_allowed_uids | ({self.admin_uid} if self.admin_uid else set())
+
+    @property
+    def embedding_user_uids(self) -> frozenset[str]:
+        return self.ai_user_uids & (self.atlas_chat_allowed_uids | ({self.admin_uid} if self.admin_uid else set()))
 
     @property
     def auth_ready(self) -> bool:
@@ -56,4 +61,5 @@ def get_settings() -> Settings:
         ai_capture_enabled=os.getenv("AI_CAPTURE_ENABLED", "false").lower() == "true",
         atlas_chat_enabled=os.getenv("ATLAS_CHAT_ENABLED", "false").lower() == "true",
         atlas_chat_allowed_uids=frozenset(filter(None, (s.strip() for s in os.getenv("ATLAS_CHAT_ALLOWED_FIREBASE_UIDS", "").split(",")))),
+        memory_embedding_enabled=os.getenv("MEMORY_EMBEDDING_ENABLED", "false").lower() == "true",
     )

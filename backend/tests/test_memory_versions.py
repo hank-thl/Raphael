@@ -118,7 +118,7 @@ def test_repository_create_duplicate_returns_owner_scoped_existing_memory():
     collection.insert_one.side_effect = DuplicateKeyError('private')
     collection.find_one.return_value = {'_id': 'id', 'user_uid': 'alice', 'revision': 2}
     repo = MemoriesRepository(collection)
-    assert repo.create_once({'_id': 'id', 'user_uid': 'alice'})['revision'] == 2
+    assert repo.create_once({'_id': 'id', 'user_uid': 'alice', 'revision': 1})['revision'] == 2
     collection.find_one.assert_called_with({'_id': 'id', 'user_uid': 'alice'})
     collection.find_one.return_value = None
-    with pytest.raises(VersionConflict): repo.create_once({'_id': 'id', 'user_uid': 'alice'})
+    with pytest.raises(VersionConflict): repo.create_once({'_id': 'id', 'user_uid': 'alice', 'revision': 1})

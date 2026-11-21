@@ -1,6 +1,7 @@
 """One logical memory with immutable embedded revisions; optimistic concurrency."""
 from pymongo import ReturnDocument
 from pymongo.errors import DuplicateKeyError
+from app.repositories.embedding_jobs import pending_embedding
 
 
 class VersionConflict(ValueError):
@@ -19,6 +20,7 @@ class MemoriesRepository:
             [('updated_at', -1), ('_id', -1)])
 
     def create_once(self, document):
+        document = {**document, 'embedding_processing': pending_embedding(document['revision'])}
         try:
             self.collection.insert_one(document)
             return document
@@ -32,7 +34,8 @@ class MemoriesRepository:
         updated = self.collection.find_one_and_update(
             {'_id': identifier, 'user_uid': uid, 'revision': expected_revision},
             {'$push': {'versions': version}, '$inc': {'revision': 1},
-             '$set': {'updated_at': version['created_at']}},
+             '$set': {'updated_at': version['created_at'],
+                      'embedding_processing': pending_embedding(expected_revision + 1)}},
             return_document=ReturnDocument.AFTER,
         )
         if updated is None:
