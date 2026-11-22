@@ -147,16 +147,56 @@ def test_no_existing_memories_creates_without_matching_call():
     matcher.decide.assert_not_called()
 
 
-def test_context_limit_stops_without_truncation_or_model_call():
+def test_oversized_candidate_is_kept_intact_and_skipped_without_aborting_analysis():
     records, repo, matcher, router, incoming, memory, plans = setup_router()
     old = deepcopy(memory)
     old['versions'][-1]['content']['evidence']['sources'] = [
         {'record_id': str(i), 'quote': 'x'} for i in range(6)]
     router.recent = Mock(return_value=[old])
-    with pytest.raises(CaptureError, match='matching_context_limit'):
-        router.route('alice', incoming['_id'], incoming['memories'][0]['_id'])
+    outcome = router.route('alice', incoming['_id'], incoming['memories'][0]['_id'])
+    assert outcome['action'] == 'uncertain'
     matcher.decide.assert_not_called()
-    assert not plans.rows
+    plan = next(iter(plans.rows.values()))
+    assert plan['selection']['skipped_count'] == 1
+    assert plan['selection']['included_count'] == 0
+    assert len(old['versions'][-1]['content']['evidence']['sources']) == 6
+    assert repo.rows[memory['_id']]['revision'] == 1
+
+
+def test_budget_counts_deduplicated_sources_not_memory_count():
+    records, repo, matcher, router, incoming, memory, plans = setup_router()
+    ids = [records.add(content=f'額外紀錄{i}') for i in range(5)]
+    first, second, third = (deepcopy(memory) for _ in range(3))
+    for row, key, sources in [(first, 'first', ids[:2]), (second, 'second', ids[2:4]), (third, 'third', ids[4:])]:
+        row['_id'] = key
+        row['versions'][-1]['content']['evidence']['sources'] = [
+            {'record_id': identifier, 'quote': f'額外紀錄{ids.index(identifier)}'} for identifier in sources]
+    # Incoming analysis already reserves the original baseline record as context.
+    router.recent = Mock(return_value=[first, second, third])
+    matcher.decide.return_value = MatchDecision(action='new', memory_id=None, merged=None)
+    result = router.route('alice', incoming['_id'], incoming['memories'][0]['_id'])
+    assert result['action'] == 'uncertain'  # Incomplete comparison must not assert "new".
+    assert [row['memory_id'] for row in matcher.decide.call_args.args[1]] == ['first', 'second']
+    assert len(matcher.decide.call_args.args[2]) == 6  # Target plus five context records.
+    plan = next(iter(plans.rows.values()))
+    assert plan['selection'] == {'version': 'matching-source-budget-v1', 'considered_count': 3,
+        'included_count': 2, 'skipped_count': 1, 'context_record_count': 5}
+    assert repo.rows[memory['_id']]['revision'] == 1
+    router.route('alice', incoming['_id'], incoming['memories'][0]['_id'])
+    matcher.decide.assert_called_once()  # Replay the persisted, budget-aware decision.
+
+
+def test_budget_skip_does_not_prevent_supported_supplement():
+    records, repo, matcher, router, incoming, memory, plans = setup_router()
+    oversized = deepcopy(memory); oversized['_id'] = 'oversized'
+    oversized['versions'][-1]['content']['evidence']['sources'] = [
+        {'record_id': str(i), 'quote': 'x'} for i in range(6)]
+    router.recent = Mock(return_value=[memory, oversized])
+    result = router.route('alice', incoming['_id'], incoming['memories'][0]['_id'])
+    assert result['action'] == 'supplement' and result['revision'] == 2
+    assert result['memory_id'] == memory['_id']
+    assert len(matcher.decide.call_args.args[1]) == 1
+    assert next(iter(plans.rows.values()))['selection']['skipped_count'] == 1
 
 
 def test_model_failure_does_not_create_plan_or_change_existing_memory():

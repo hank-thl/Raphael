@@ -82,3 +82,32 @@ def test_default_preview_never_reads_settings_or_database(monkeypatch, capsys):
     assert cli.main(['--contains', '酸']) == 0
     assert '"database_accessed": false' in capsys.readouterr().out
     blocked.assert_not_called()
+
+
+def test_failed_selection_is_owner_scoped_bounded_and_readonly(monkeypatch):
+    db, record, *_ = fixture(monkeypatch)
+    record['ai_processing'].update(state='failed', error='matching_context_limit')
+    report = cli.collect(db, 'owner', limit=3, failed_only=True)
+    assert db['records'].find.call_args.args[0] == {
+        'user_uid': 'owner', 'deleted_at': None, 'ai_processing.state': 'failed'}
+    db['records'].find.return_value.sort.return_value.limit.assert_called_once_with(4)
+    assert report['failed_only'] and report['contains'] is None
+    assert report['records'][0]['analysis_error'] == 'matching_context_limit'
+    assert report['provider_calls'] == 0 and not report['database_written']
+    for collection in db.values():
+        collection.update_one.assert_not_called()
+        collection.insert_one.assert_not_called()
+
+
+def test_failed_preview_does_not_connect_or_require_keyword(monkeypatch, capsys):
+    blocked = Mock(side_effect=AssertionError('network forbidden'))
+    monkeypatch.setattr(cli, 'get_settings', blocked)
+    assert cli.main(['--failed']) == 0
+    assert '"database_accessed": false' in capsys.readouterr().out
+    blocked.assert_not_called()
+
+
+def test_failed_filter_rejects_successful_or_changed_rows(monkeypatch):
+    db, *_ = fixture(monkeypatch)
+    with pytest.raises(ValueError, match='sources_changed'):
+        cli.collect(db, 'owner', failed_only=True)

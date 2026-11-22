@@ -29,20 +29,35 @@ class MemoryRoutingService:
         plan = self.plans.get(uid, key)
         if plan is None:
             memories = self.recent(uid, candidate_id)
-            options, source_ids = [], set()
-            for memory in memories:
-                latest = memory['versions'][-1]
-                options.append({'memory_id': memory['_id'], 'revision': memory['revision'],
-                                'content': latest['content']})
-                source_ids.update(source['record_id'] for source in latest['content']['evidence']['sources'])
-            source_ids.update(analysis['context_record_ids'])
-            source_ids.discard(analysis['target_record_id'])
+            source_ids = set(analysis['context_record_ids']) - {analysis['target_record_id']}
             if len(source_ids) > 5:
                 raise CaptureError('matching_context_limit')
+            options, selected, skipped = [], [], 0
+            for memory in memories:
+                latest = memory['versions'][-1]
+                required = {source['record_id'] for source in latest['content']['evidence']['sources']}
+                combined = (source_ids | required) - {analysis['target_record_id']}
+                if len(combined) > 5:
+                    # Keep evidence complete. Do not let unrelated multi-source
+                    # candidates abort an otherwise valid incoming analysis.
+                    skipped += 1
+                    continue
+                options.append({'memory_id': memory['_id'], 'revision': memory['revision'],
+                                'content': latest['content']})
+                selected.append(memory)
+                source_ids = combined
+            selection = {'version': 'matching-source-budget-v1', 'considered_count': len(memories),
+                         'included_count': len(selected), 'skipped_count': skipped,
+                         'context_record_count': len(source_ids)}
+            memories = selected
             data = self.capture.load(uid, analysis['target_record_id'], sorted(source_ids), analysis['timezone'])
             decision = (self.matcher.decide(candidate, options, snapshots(data), data.target.record_id)
                         if options else MatchDecision(action='new', memory_id=None, merged=None))
             decision = MatchDecision.model_validate(decision.model_dump())
+            if skipped and decision.action == 'new':
+                # Missing comparisons do not establish that this is a new event.
+                decision = MatchDecision(action='uncertain', memory_id=None, merged=None,
+                    decision_note='部分候選的完整來源超出配對預算，無法完整比較，先保留為獨立候選。')
             expected_revision = None
             result = None
             if decision.action == 'supplement':
@@ -63,6 +78,7 @@ class MemoryRoutingService:
                 result.validate_sources(data)
                 expected_revision = target['revision']
             plan = self.plans.create_once({'_id': key, 'user_uid': uid, 'match_version': MATCH_VERSION,
+                'selection': selection,
                 'decision': decision.model_dump(), 'expected_revision': expected_revision,
                 'sources': snapshots(data), 'timezone': data.timezone,
                 'result': result.model_dump() if result else None, 'content_type_id': analysis['content_type_id']})

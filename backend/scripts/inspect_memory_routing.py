@@ -16,18 +16,26 @@ from scripts.backfill_memory_embeddings import target_uid
 from scripts.evaluate_memory_retrieval import PRIVATE_DIR, checkpoint
 
 
-def collect(db, uid, text, limit=5):
-    if not uid or not text.strip() or len(text) > 80 or not 1 <= limit <= 10:
+def collect(db, uid, text=None, limit=5, *, failed_only=False):
+    if (not uid or not 1 <= limit <= 10 or
+            (not failed_only and (not isinstance(text, str) or not text.strip() or len(text) > 80)) or
+            (failed_only and text is not None)):
         raise ValueError('invalid_inspection')
     records = db['records']
-    rows = list(records.find({'user_uid': uid, 'deleted_at': None,
-        'content': {'$regex': re.escape(text), '$options': 'i'}}).sort([('created_at', -1), ('_id', -1)]).limit(limit + 1))
+    query = {'user_uid': uid, 'deleted_at': None}
+    if failed_only:
+        query['ai_processing.state'] = 'failed'
+    else:
+        query['content'] = {'$regex': re.escape(text), '$options': 'i'}
+    rows = list(records.find(query).sort([('created_at', -1), ('_id', -1)]).limit(limit + 1))
     selected = rows[:limit]
     capture = MemoryCaptureService(records, AnalysesRepository(db['analyses']), None, '')
     versions = MemoryVersionsService(capture, MemoriesRepository(db['memories']))
     output, checks = [], []
     for row in selected:
         if row.get('user_uid') != uid or row.get('deleted_at') is not None:
+            raise ValueError('sources_changed')
+        if failed_only and row.get('ai_processing', {}).get('state') != 'failed':
             raise ValueError('sources_changed')
         rid = str(row['_id'])
         analyses = list(db['analyses'].find({'user_uid': uid, 'target_record_id': rid}).limit(21))
@@ -75,6 +83,7 @@ def collect(db, uid, text, limit=5):
             routes.append({'route_id': plan['_id'], 'sources_eligible': True,
                 'match_version': plan['match_version'], 'candidate': candidate,
                 'decision': plan['decision'], 'expected_revision': plan['expected_revision'],
+                'selection': plan.get('selection'),
                 'raw_record_input_ids': ids,
                 'candidate_options_saved': False,
                 'model_reason_saved': bool(plan['decision'].get('decision_note'))})
@@ -105,6 +114,7 @@ def collect(db, uid, text, limit=5):
         if not current or any(current.get(k) != row.get(k) for k in ('content', 'created_at', 'ai_processing')):
             raise ValueError('sources_changed')
     report = {'version': 'routing-inspection-v1', 'target_uid': uid, 'contains': text,
+        'failed_only': failed_only,
         'created_at': datetime.now(timezone.utc).isoformat(), 'records': output,
         'more_matching_records': len(rows) > limit, 'database_written': False, 'provider_calls': 0}
     if len(json.dumps(report, ensure_ascii=False).encode()) > 1024 * 1024:
@@ -114,12 +124,14 @@ def collect(db, uid, text, limit=5):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--contains', required=True)
+    selection = parser.add_mutually_exclusive_group(required=True)
+    selection.add_argument('--contains')
+    selection.add_argument('--failed', action='store_true', help='Inspect recent failed analyses without a message keyword')
     parser.add_argument('--uid')
     parser.add_argument('--limit', type=int, default=5)
     parser.add_argument('--run', action='store_true')
     args = parser.parse_args(argv)
-    if not args.contains.strip() or len(args.contains) > 80 or not 1 <= args.limit <= 10:
+    if (args.contains is not None and (not args.contains.strip() or len(args.contains) > 80)) or not 1 <= args.limit <= 10:
         parser.error('--contains must have 1..80 characters and --limit must be 1..10')
     if not args.run:
         print(json.dumps({'mode': 'preview', 'database_accessed': False, 'database_written': False, 'provider_calls': 0}))
@@ -132,7 +144,7 @@ def main(argv=None):
         connection = DatabaseConnection(settings); connection.open()
         if connection.database is None:
             raise ValueError('database_unavailable')
-        report = collect(connection.database, uid, args.contains, args.limit)
+        report = collect(connection.database, uid, args.contains, args.limit, failed_only=args.failed)
         path = PRIVATE_DIR / ('routing-inspection-' + uuid4().hex + '.json')
         checkpoint(path, report)
         print(json.dumps({'state': 'succeeded', 'report': str(path), 'record_count': len(report['records']),
