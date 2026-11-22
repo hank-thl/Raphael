@@ -84,6 +84,14 @@ def test_missing_raw_source_prevents_model_call(setup):
     model.generate.assert_not_called()
 
 
+def test_concurrent_new_memory_does_not_invalidate_unchanged_answer_inputs(setup):
+    service, reader, model, memory = setup
+    extra = deepcopy(memory); extra['_id'] = 'b' * 64
+    reader.get_eligible_many.side_effect = [[memory], [memory, extra]]
+    result = service.generate('owner', 'question')
+    assert len(result['inputs']) == 1 and result['inputs'][0]['memory_id'] == memory['_id']
+
+
 def test_no_memories_can_only_return_insufficient_answer(setup):
     service, reader, model, _ = setup
     reader.memories.recent.side_effect = lambda uid: iter([])

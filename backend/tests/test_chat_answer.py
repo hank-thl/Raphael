@@ -1,4 +1,5 @@
 from unittest.mock import Mock
+from copy import deepcopy
 
 import pytest
 
@@ -98,6 +99,19 @@ def test_entire_coverage_change_after_answer_rejects_result(context):
     extractor.generate.side_effect = generate
     with pytest.raises(AnswerError, match='sources_changed'):
         service.generate('owner', '問題')
+
+
+def test_background_addition_does_not_invalidate_existing_atlas_evidence(context):
+    service, reader, extractor, memory, *_ = context
+    original = extractor.generate.return_value
+    extra = deepcopy(memory); extra['_id'] = 'b' * 64
+    def generate(*args):
+        reader.memories.recent.side_effect = lambda uid: iter([memory, extra])
+        return original
+    extractor.generate.side_effect = generate
+    result = service.generate('owner', '問題')
+    assert result['retrieval']['mode'] == 'atlas'
+    assert result['inputs'] == [MemoryAnswerService.dependency(memory)]
 
 
 def test_feature_factory_keeps_original_answerer_when_off(monkeypatch):

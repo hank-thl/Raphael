@@ -75,7 +75,7 @@ class ChatAnswerService(MemoryAnswerService):
             covered = {row['memory_id']: row['fingerprint'] for row in retrieved['covered_inputs']}
             if retrieved['candidate_cap_reached'] or any(covered.get(mid) != fp for mid, fp in dependencies.items()):
                 return self.unavailable(uid, question, previous)
-            if self.fingerprint(self.collect(uid)) != before_fingerprint:
+            if self.fingerprint([row for row in self.collect(uid) if row['_id'] in dependencies]) != before_fingerprint:
                 raise AnswerError('sources_changed')
             expected = [{'memory_id': row['memory_id'], 'fingerprint': row['fingerprint']}
                         for row in retrieved['results']]
@@ -84,7 +84,7 @@ class ChatAnswerService(MemoryAnswerService):
                 for mid in context['cited_ids'] if mid not in selected_ids)
             result = RetrievedMemoryAnswerService(self.reader, self.extractor, uid, expected).generate(
                 uid, question, context['previous'])
-            if self.fingerprint(self.collect(uid)) != before_fingerprint:
+            if self.fingerprint([row for row in self.collect(uid) if row['_id'] in dependencies]) != before_fingerprint:
                 raise AnswerError('sources_changed')
             # Old uncited inputs may have affected the wording of prior answers.
             # Keep them as invalidation dependencies without supplying every Memory.

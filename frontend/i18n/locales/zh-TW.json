@@ -289,5 +289,13 @@
       "atlasDescription": "搜尋相關記憶後回答。",
       "directDescription": "直接讀取可用記憶後回答。"
     }
+  },
+  "unified": {
+    "recordHint": "保存訊息並整理記憶，不產生 AI 回覆。",
+    "dialogueHint": "保存訊息、整理記憶，並由 Raphael 回覆。",
+    "welcome": "記錄或對話，都留在這裡。",
+    "answerPending": "訊息已儲存，回答尚未開始。",
+    "resume": "繼續送出",
+    "conflict": "這次送出與原請求不一致，請先查詢儲存結果。"
   }
 }

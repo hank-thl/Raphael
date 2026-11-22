@@ -167,6 +167,9 @@ class MemoryAnswerService:
             result.validate_sources(memories)
         except (ValueError, TypeError):
             raise AnswerError('invalid_answer') from None
-        if self.fingerprint(self.collect(uid)) != before:
+        # Concurrent capture may add a new Memory. It was not evidence for this
+        # answer; only changes to the original input set invalidate the result.
+        input_ids = {row['_id'] for row in memories}
+        if self.fingerprint([row for row in self.collect(uid) if row['_id'] in input_ids]) != before:
             raise AnswerError('sources_changed')
         return {'answer': result, 'inputs': [self.dependency(row) for row in memories]}

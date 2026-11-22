@@ -289,5 +289,13 @@
       "atlasDescription": "Answered after searching for relevant memories.",
       "directDescription": "Answered by directly reading available memories."
     }
+  },
+  "unified": {
+    "recordHint": "Save your message and organize memories without an AI reply.",
+    "dialogueHint": "Save your message, organize memories, and receive a reply.",
+    "welcome": "Your notes and conversations, together.",
+    "answerPending": "Message saved. The reply has not started.",
+    "resume": "Continue sending",
+    "conflict": "This submission conflicts with the original request. Check its saved status first."
   }
 }

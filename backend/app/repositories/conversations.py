@@ -40,27 +40,33 @@ class ConversationsRepository:
     def get(self, uid, request_id):
         return self.collection.find_one({'_id': identifier(uid, request_id), 'user_uid': uid})
 
-    def start(self, uid, request_id, question):
+    def start(self, uid, request_id, question, *, source_record_id=None, record_inputs=None):
         now = utc_now()
         row = {'_id': identifier(uid, request_id), 'request_id': request_id, 'user_uid': uid,
                'question': question, 'state': 'running', 'answer': None, 'inputs': [],
                'error': None, 'created_at': now, 'updated_at': now,
                'lease_until': now + timedelta(minutes=5)}
+        if source_record_id is not None:
+            row.update(source_record_id=source_record_id, record_inputs=record_inputs or [])
         try:
             self.collection.insert_one(row)
             return row, True
         except DuplicateKeyError:
             existing = self.get(uid, request_id)
-            if existing is None or existing['question'] != question:
+            if (existing is None or existing['question'] != question
+                    or existing.get('source_record_id') != source_record_id):
                 raise ValueError('request_conflict') from None
             return existing, False
 
-    def finish(self, row, state, *, answer=None, inputs=None, error=None, processing=None):
+    def finish(self, row, state, *, answer=None, inputs=None, error=None, processing=None, record_inputs=None):
         now = utc_now()
+        values = {'state': state, 'answer': answer, 'inputs': inputs or [], 'error': error,
+                  'processing': processing, 'updated_at': now}
+        if record_inputs is not None:
+            values['record_inputs'] = record_inputs
         return self.collection.find_one_and_update(
             {'_id': row['_id'], 'user_uid': row['user_uid'], 'state': 'running', 'lease_until': {'$gt': now}},
-            {'$set': {'state': state, 'answer': answer, 'inputs': inputs or [], 'error': error,
-                      'processing': processing, 'updated_at': now}}, return_document=ReturnDocument.AFTER)
+            {'$set': values}, return_document=ReturnDocument.AFTER)
 
     def page(self, uid, limit=20, cursor=None):
         query = {'user_uid': uid}
