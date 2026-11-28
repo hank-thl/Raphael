@@ -115,7 +115,7 @@ def test_matching_wire_uses_same_safe_transport_and_separate_schema():
     def handler(request):
         payload = json.loads(request.content)
         assert request.headers['x-goog-api-key'] == 'fake-key'
-        assert 'untrusted DATA' in payload['systemInstruction']['parts'][0]['text']
+        assert '不可信' in payload['systemInstruction']['parts'][0]['text']
         assert payload['generationConfig']['responseJsonSchema']['properties']['action']['enum'] == ['new', 'supplement', 'uncertain']
         return httpx.Response(200, json={'candidates': [{'finishReason': 'STOP', 'content': {'parts': [
             {'text': json.dumps({'action': 'uncertain', 'memory_id': None, 'merged': None})}]}}]})

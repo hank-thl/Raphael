@@ -106,7 +106,7 @@ def test_prompt_receives_catalog_and_reuse_instruction():
     def handler(request):
         payload = json.loads(request.content)
         assert json.loads(payload['contents'][0]['parts'][0]['text'])['content_types'] == ['journal']
-        assert 'Return that exact name' in payload['systemInstruction']['parts'][0]['text']
+        assert '原樣回傳該名稱' in payload['systemInstruction']['parts'][0]['text']
         return httpx.Response(200, json={'candidates': [{'finishReason': 'STOP', 'content': {
             'parts': [{'text': skipped('journal').model_dump_json()}]}}]})
     data = example('noise').model_copy(update={'content_types': ['journal']})

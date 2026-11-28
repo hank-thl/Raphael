@@ -26,9 +26,9 @@ def test_bounded_single_call_contract_and_whitelisted_input():
     assert data=={'question':'已經買了嗎？','candidates':[candidate()]}
     assert 'required_memory_ids' not in payload and 'user_uid' not in payload and 'score' not in payload
     assert schema['additionalProperties'] is False and instruction==INSTRUCTION
-    assert 'untrusted DATA' in instruction
+    assert '不可信' in instruction
     assert result.answerability=='partial'
-    assert FILTER_VERSION=='candidate-filter-v1'
+    assert FILTER_VERSION=='candidate-filter-v1-zh-v1'
 
 
 @pytest.mark.parametrize('change',['unknown_id','duplicate_id','missing_id','invented_quote',

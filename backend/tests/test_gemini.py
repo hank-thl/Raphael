@@ -47,7 +47,7 @@ def test_real_http_contract_auth_header_schema_and_exact_untranslated_input():
         assert schema['additionalProperties'] is False
         assert 'user_uid' not in json.dumps(schema)
         assert 'tools' not in payload
-        assert 'untrusted DATA' in payload['systemInstruction']['parts'][0]['text']
+        assert '不可信' in payload['systemInstruction']['parts'][0]['text']
         return httpx.Response(200, json=envelope())
     result = extractor(handler).analyze(data)
     assert result.items[0].text == '使用者今天參加陶藝課，感到開心。'
@@ -299,7 +299,7 @@ def test_v3_wire_schema_and_prompt_describe_multiple_kinds_and_fixed_states():
     assert choices[0]['enum'] == ['considering', 'confirmed', 'occurred', 'cancelled']
     assert choices[1] == {'type': 'null'}
     assert CONTRACT_VERSION.endswith('-v4')
-    assert 'A feeling alone has status null' in SYSTEM_INSTRUCTION
+    assert '只有感受時 status 為 null' in SYSTEM_INSTRUCTION
 
 
 def test_usage_instrumentation_only_returns_safe_numeric_fields():

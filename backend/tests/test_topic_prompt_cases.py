@@ -24,7 +24,7 @@ def test_topic_acceptance_inputs_and_multi_aspect_output_roundtrip(case, topics,
         assert supplied['target']['content'] == TOPIC_CASES[case]
         assert supplied['existing_topics'] == TOPIC_CATALOG
         # Exercise the real adapter, without an external request or database.
-        assert 'not an index of' in payload['systemInstruction']['parts'][0]['text']
+        assert '不是所有具名事物的索引' in payload['systemInstruction']['parts'][0]['text']
         calls.append(request)
         result = {'content_type': 'question' if case == 'topics-question' else 'journal',
                   'memory_action': 'extract', 'context_required': False, 'context_record_ids': [],
@@ -42,5 +42,5 @@ def test_topic_acceptance_inputs_and_multi_aspect_output_roundtrip(case, topics,
 
 
 def test_prompt_revision_keeps_existing_contract():
-    assert PROMPT_VERSION == 'memory-extraction-topics-v4.2'
+    assert PROMPT_VERSION == 'memory-extraction-topics-v4.2-zh-v1'
     assert CONTRACT_VERSION == 'extraction-preview-v4'

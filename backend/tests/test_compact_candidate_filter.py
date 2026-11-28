@@ -22,12 +22,12 @@ def test_compact_output_only_and_detailed_instructions_remain_unchanged():
     assert json.loads(payload)=={'question':'已買票嗎？','candidates':[candidate()]}
     assert set(schema['properties'])=={'keep_ids','answerability','limitation'}
     assert 'items' not in value.model_dump() and 'quote' not in value.model_dump()
-    assert 'Use these relevance criteria internally' in prompt
-    assert 'For direct/background supply' not in prompt and 'For irrelevant use quote=null' not in prompt
-    assert 'State the concrete missing support\nbriefly in limitation' in prompt
-    assert 'Classify EVERY candidate exactly once:' in INSTRUCTION
-    assert 'For irrelevant use quote=null' in INSTRUCTION
-    assert FILTER_VERSION=='candidate-filter-v1' and COMPACT_FILTER_VERSION=='candidate-filter-compact-v1'
+    assert '在內部使用以下相關性判準' in prompt
+    assert 'direct／background 的 quote 必須' not in prompt and 'irrelevant 的 quote=null' not in prompt
+    assert '在 limitation 簡短指出' in prompt
+    assert '每個候選必須恰好分類一次：' in INSTRUCTION
+    assert 'irrelevant 的 quote=null' in INSTRUCTION
+    assert FILTER_VERSION=='candidate-filter-v1-zh-v1' and COMPACT_FILTER_VERSION=='candidate-filter-compact-v1-zh-v1'
     assert len(prompt)<len(INSTRUCTION)+100
 
 

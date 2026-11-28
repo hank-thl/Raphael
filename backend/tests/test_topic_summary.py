@@ -213,7 +213,7 @@ def test_real_summary_wire_contract_with_mock_transport():
     answer = deepcopy(model.generate.return_value)
     def handler(request):
         body = json.loads(request.content)
-        assert 'untrusted DATA' in body['systemInstruction']['parts'][0]['text']
+        assert '不可信' in body['systemInstruction']['parts'][0]['text']
         schema = body['generationConfig']['responseJsonSchema']
         assert schema['additionalProperties'] is False
         assert {'title', 'summary', 'sections'} <= set(schema['required'])
@@ -320,7 +320,7 @@ def test_optional_sections_support_conflicts_and_timelines_without_rewriting_mem
     assert response['content']['sections'][0]['layout'] == 'timeline'
     assert rows == original
     instruction = model.generate.call_args.args[2]
-    assert 'Recency alone' in instruction and 'Absence of a record' in instruction
+    assert '不能只靠新舊順序' in instruction and '沒有紀錄不等於沒有發生' in instruction
 
 
 def test_new_cache_retains_flat_compatibility_but_article_contract_is_clean():

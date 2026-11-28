@@ -23,7 +23,7 @@ def test_assessment_is_non_evidence_context_and_baseline_prompt_is_preserved():
     assert data['retrieval_assessment']=={'answerability':'insufficient','limitation':'未知持續時間。','not_personal_evidence':True}
     assert prompt==INSTRUCTION+trial.SCOPE_INSTRUCTION
     assert metrics['answer_provider_calls']==1 and metrics['answer_provider_ms']>=0
-    assert ANSWER_PROMPT_VERSION=='memory-answer-strategies-v2.3'
+    assert ANSWER_PROMPT_VERSION=='memory-answer-strategies-v2.3-zh-v1'
     baseline=Mock();trial.MeasuredExtractor(baseline,{}).generate(payload,{},INSTRUCTION)
     assert baseline.generate.call_args.args==(payload,{},INSTRUCTION)
 
